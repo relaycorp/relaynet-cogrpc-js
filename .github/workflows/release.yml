@@ -43,3 +43,4 @@ jobs:
           PUBLISH_DIR: ./build/docs
         with:
           emptyCommits: false
+          commitMessage: "${{ github.event.head_commit.message }} [skip ci]"
