@@ -1,10 +1,22 @@
+/* tslint:disable:no-let */
+
 import * as grpc from 'grpc';
 
 import { getMockContext, mockSpy } from './_test_utils';
 import { CogRPCClient } from './client';
 import * as grpcService from './grpcService';
 
-jest.mock('./grpcService');
+let mockGrcpClient: Partial<grpc.Client>;
+beforeEach(() => {
+  mockGrcpClient = {
+    close: jest.fn(),
+  };
+});
+jest.mock('./grpcService', () => {
+  return {
+    GrpcClient: jest.fn().mockImplementation(() => mockGrcpClient),
+  };
+});
 
 const stubServerAddress = 'https://relaycorp.tech';
 
@@ -43,7 +55,14 @@ describe('CogRPCClient', () => {
     });
   });
 
-  test.todo('close() should close the client');
+  test('close() should close the client', () => {
+    const client = new CogRPCClient(stubServerAddress);
+
+    client.close();
+
+    expect(mockGrcpClient.close).toBeCalledTimes(1);
+    expect(mockGrcpClient.close).toBeCalledWith();
+  });
 
   describe('deliverCargo', () => {
     test.todo('Deadline should be set to 2 seconds');
