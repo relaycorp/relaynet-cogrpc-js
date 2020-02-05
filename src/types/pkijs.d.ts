@@ -1,5 +1,7 @@
 /* tslint:disable:readonly-array readonly-keyword */
 
+/// <reference types="@types/pkijs" />
+
 declare module 'pkijs' {
   // Importing and exporting each member because "@types/pkijs" doesn't expose
   // the "pkijs" module -- it exports many individual modules. Also, the
