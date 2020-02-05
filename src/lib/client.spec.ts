@@ -1,7 +1,8 @@
+import * as grpc from 'grpc';
+
+import { getMockContext, mockSpy } from './_test_utils';
 import { CogRPCClient } from './client';
 import * as grpcService from './grpcService';
-import * as grpc from 'grpc';
-import { getMockContext, mockSpy } from './_test_utils';
 
 jest.mock('./grpcService');
 
@@ -13,6 +14,7 @@ describe('CogRPCClient', () => {
     const createInsecureSpy = mockSpy(jest.spyOn(grpc.credentials, 'createInsecure'));
 
     test('gRPC client must be initialized with specified server address', () => {
+      // tslint:disable-next-line:no-unused-expression
       new CogRPCClient(stubServerAddress);
 
       expect(grpcService.GrpcClient).toBeCalledTimes(1);
@@ -21,6 +23,7 @@ describe('CogRPCClient', () => {
     });
 
     test('TSL should be used by default', () => {
+      // tslint:disable-next-line:no-unused-expression
       new CogRPCClient(stubServerAddress);
 
       expect(createSslSpy).toBeCalledTimes(1);
@@ -30,6 +33,7 @@ describe('CogRPCClient', () => {
     });
 
     test('TSL can be disabled', () => {
+      // tslint:disable-next-line:no-unused-expression
       new CogRPCClient(stubServerAddress, false);
 
       expect(createInsecureSpy).toBeCalledTimes(1);
