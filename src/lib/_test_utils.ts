@@ -5,7 +5,7 @@ export function getMockContext(mockedObject: any): jest.MockContext<any, any> {
   return mockInstance.mock;
 }
 
-export function mockSpy(spy: SpyInstance, mockImplementation?: () => any) {
+export function mockSpy(spy: SpyInstance, mockImplementation?: () => any): SpyInstance {
   beforeEach(() => {
     spy.mockClear();
     if (mockImplementation) {
