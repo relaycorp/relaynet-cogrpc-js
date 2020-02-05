@@ -22,8 +22,8 @@ export interface CargoDeliveryAck {
 }
 
 type BidiStreamRequest<Req, Res> = (
-  metadata: Metadata,
-  options: CallOptions,
+  metadata?: Metadata,
+  options?: CallOptions,
 ) => ClientDuplexStream<Req, Res>;
 
 export interface CargoRelayService {
