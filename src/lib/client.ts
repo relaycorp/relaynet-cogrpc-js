@@ -1,30 +1,12 @@
 import { CargoDelivery } from '@relaycorp/relaynet-core';
 import * as grpc from 'grpc';
 import pipe from 'it-pipe';
-import { Transform } from 'stream';
 import * as toIterable from 'stream-to-it';
 import uuid from 'uuid-random';
 
 import { CargoDeliveryAck, CargoRelayService, GrpcClient } from './grpcService';
 
 const DEADLINE_SECONDS = 2;
-
-class CargoDeliveryAckStream extends Transform {
-  // tslint:disable-next-line:readonly-keyword
-  constructor(protected readonly pendingAckIdMapping: { [key: string]: string }) {
-    super({ objectMode: true, allowHalfOpen: false });
-  }
-
-  public _transform(
-    ack: CargoDeliveryAck,
-    _encoding: string,
-    callback: (error?: Error | null, data?: any) => void,
-  ): void {
-    // tslint:disable-next-line:no-console
-    console.log('Incoming ack', ack);
-    callback(null, ack.id);
-  }
-}
 
 // tslint:disable-next-line:max-classes-per-file
 export class CogRPCClient {
@@ -49,12 +31,9 @@ export class CogRPCClient {
       deadline,
     });
 
-    const cargoDeliveryAckStream = new CargoDeliveryAckStream({});
-
     const output = await pipe(
       toIterable.source(call),
-      toIterable.transform(cargoDeliveryAckStream),
-      async (source: any) => {
+      async (source: AsyncIterable<CargoDeliveryAck>) => {
         for (const relay of cargoRelay) {
           const deliveryId = uuid();
           call.write({ id: deliveryId, cargo: relay.cargo });
@@ -64,9 +43,9 @@ export class CogRPCClient {
         // tslint:disable-next-line:readonly-array
         const chunks: string[] = [];
         for await (const chunk of source) {
-          const localId = pendingAckIds[chunk];
+          const localId = pendingAckIds[chunk.id];
           // tslint:disable-next-line:no-delete
-          delete pendingAckIds[chunk];
+          delete pendingAckIds[chunk.id];
           chunks.push(localId);
         }
         return chunks;
