@@ -1,24 +1,51 @@
 /* tslint:disable:no-let */
 
-import { CargoRelay } from '@relaycorp/relaynet-core';
-import { EventEmitter } from 'events';
+import { CargoDelivery } from '@relaycorp/relaynet-core';
 import * as grpc from 'grpc';
 import * as jestDateMock from 'jest-date-mock';
+import { Duplex } from 'stream';
 
 import { getMockContext, mockSpy } from './_test_utils';
 import { CogRPCClient } from './client';
 import * as grpcService from './grpcService';
 import MockInstance = jest.MockInstance;
 
-class MockDuplexStream extends EventEmitter {
-  public readonly close = jest.fn();
-  public readonly write = jest.fn();
+class BidiStreamCallSpy extends Duplex {
+  // tslint:disable-next-line:readonly-array
+  public readonly cargoDeliveries: grpcService.CargoDelivery[] = [];
+  // tslint:disable-next-line:readonly-array readonly-keyword
+  public ackIds: string[] = [];
+
+  // tslint:disable-next-line:readonly-array
+  public setAcks(ackIds: string[]): void {
+    this.ackIds = ackIds;
+  }
+
+  public _read(_size: number): void {
+    while (this.ackIds.length) {
+      const canPushAgain = this.push({ id: this.ackIds.shift() });
+      if (!canPushAgain) {
+        return;
+      }
+    }
+
+    this.push(null);
+  }
+
+  public _write(
+    ack: grpcService.CargoDelivery,
+    _encoding: string,
+    callback: (error?: Error | null) => void,
+  ): void {
+    this.cargoDeliveries.push(ack);
+    callback(null);
+  }
 }
 
-let mockClientDuplexStream: MockDuplexStream;
+let mockClientDuplexStream: BidiStreamCallSpy;
 let mockGrcpClient: Partial<grpc.Client> & { readonly deliverCargo: MockInstance<any, any> };
 beforeEach(() => {
-  mockClientDuplexStream = new MockDuplexStream();
+  mockClientDuplexStream = new BidiStreamCallSpy({ objectMode: true });
   mockGrcpClient = {
     close: jest.fn(),
     deliverCargo: jest.fn().mockReturnValueOnce(mockClientDuplexStream),
@@ -89,21 +116,21 @@ describe('CogRPCClient', () => {
   });
 
   describe('deliverCargo', () => {
-    test('Call metadata should not be set', () => {
+    test('Call metadata should not be set', async () => {
       const client = new CogRPCClient(stubServerAddress);
 
-      Array.from(client.deliverCargo(generateCargoRelays([])));
+      await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([])));
 
       expect(mockGrcpClient.deliverCargo).toBeCalledTimes(1);
       expect(mockGrcpClient.deliverCargo.mock.calls[0][0]).toEqual(undefined);
     });
 
-    test('Deadline should be set to 2 seconds', () => {
+    test('Deadline should be set to 2 seconds', async () => {
       const client = new CogRPCClient(stubServerAddress);
 
       const currentDate = new Date();
       jestDateMock.advanceTo(currentDate);
-      Array.from(client.deliverCargo(generateCargoRelays([])));
+      await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([])));
 
       expect(mockGrcpClient.deliverCargo).toBeCalledTimes(1);
 
@@ -112,43 +139,47 @@ describe('CogRPCClient', () => {
       expect(mockGrcpClient.deliverCargo.mock.calls[0][1]).toEqual({ deadline: expectedDeadline });
     });
 
-    test('Each cargo from input generator should be delivered', () => {
+    test('Each cargo from input iterator should be delivered', async () => {
       const client = new CogRPCClient(stubServerAddress);
 
-      const cargoRelays: readonly CargoRelay[] = [
-        { relayId: 'one', cargo: Buffer.from('foo') },
-        { relayId: 'two', cargo: Buffer.from('bar') },
+      const cargoRelays: readonly CargoDelivery[] = [
+        { localId: 'one', cargo: Buffer.from('foo') },
+        { localId: 'two', cargo: Buffer.from('bar') },
       ];
-      Array.from(client.deliverCargo(generateCargoRelays(cargoRelays)));
+      await consumeAsyncIterable(client.deliverCargo(generateCargoRelays(cargoRelays)));
 
-      expect(mockClientDuplexStream.write).toBeCalledTimes(2);
-      expect(mockClientDuplexStream.write).toBeCalledWith(
-        expect.objectContaining({
-          cargo: cargoRelays[0].cargo,
-        }),
-      );
-      expect(mockClientDuplexStream.write).toBeCalledWith(
-        expect.objectContaining({
-          cargo: cargoRelays[1].cargo,
-        }),
-      );
+      expect(mockClientDuplexStream.cargoDeliveries).toEqual([
+        expect.objectContaining({ cargo: cargoRelays[0].cargo }),
+        expect.objectContaining({ cargo: cargoRelays[1].cargo }),
+      ]);
     });
 
-    test('Relay ids from input generator should be replaced before sending to server', () => {
+    test('Relay ids from input iterator should be replaced before sending to server', async () => {
       const client = new CogRPCClient(stubServerAddress);
 
-      const stubRelay = { relayId: 'original-id', cargo: Buffer.from('foo') };
-      Array.from(client.deliverCargo(generateCargoRelays([stubRelay])));
+      const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
+      await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay])));
 
-      expect(mockClientDuplexStream.write).toBeCalledTimes(1);
-      expect(mockClientDuplexStream.write).toBeCalledWith(
-        expect.objectContaining({
-          id: mockStubUuid4,
-        }),
-      );
+      expect(mockClientDuplexStream.cargoDeliveries).toHaveLength(1);
+      expect(mockClientDuplexStream.cargoDeliveries[0]).toHaveProperty('id', mockStubUuid4);
     });
 
-    test.todo('Each relay id acknowledged by the server should be yielded');
+    test('Id of each relay acknowledged by the server should be yielded', async () => {
+      const client = new CogRPCClient(stubServerAddress);
+
+      const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
+      const deliveredCargoIds = client.deliverCargo(generateCargoRelays([stubRelay]));
+
+      mockClientDuplexStream.setAcks([mockStubUuid4]);
+
+      let ackCount = 0;
+      for await (const ackId of deliveredCargoIds) {
+        expect(ackId).toEqual(stubRelay.localId);
+        ackCount++;
+      }
+
+      expect(ackCount).toEqual(1);
+    });
 
     test.todo('Unknown relay ids should close the connection and throw an error');
 
@@ -163,9 +194,18 @@ describe('CogRPCClient', () => {
     );
 
     function* generateCargoRelays(
-      cargoRelays: readonly CargoRelay[],
-    ): IterableIterator<CargoRelay> {
+      cargoRelays: readonly CargoDelivery[],
+    ): IterableIterator<CargoDelivery> {
       yield* cargoRelays;
     }
   });
 });
+
+async function consumeAsyncIterable<V>(iter: AsyncIterable<V>): Promise<readonly V[]> {
+  // tslint:disable-next-line:readonly-array
+  const values = [];
+  for await (const _value of iter) {
+    values.push(_value);
+  }
+  return values;
+}
