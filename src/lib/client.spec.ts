@@ -16,9 +16,8 @@ class BidiStreamCallSpy extends Duplex {
   // tslint:disable-next-line:readonly-array readonly-keyword
   public ackIds: string[] = [];
 
-  // tslint:disable-next-line:readonly-array
-  public setAcks(ackIds: string[]): void {
-    this.ackIds = ackIds;
+  public addAck(ackId: string): void {
+    this.ackIds.push(ackId);
   }
 
   public _read(_size: number): void {
@@ -170,7 +169,7 @@ describe('CogRPCClient', () => {
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       const deliveredCargoIds = client.deliverCargo(generateCargoRelays([stubRelay]));
 
-      mockClientDuplexStream.setAcks([mockStubUuid4]);
+      mockClientDuplexStream.addAck(mockStubUuid4);
 
       let ackCount = 0;
       for await (const ackId of deliveredCargoIds) {
