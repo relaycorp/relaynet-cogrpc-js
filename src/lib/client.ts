@@ -37,6 +37,7 @@ export class CogRPCClient {
         for (const relay of cargoRelay) {
           const deliveryId = uuid();
           call.write({ id: deliveryId, cargo: relay.cargo });
+          // tslint:disable-next-line:no-object-mutation
           pendingAckIds[deliveryId] = relay.localId;
         }
 
@@ -44,7 +45,7 @@ export class CogRPCClient {
         const chunks: string[] = [];
         for await (const chunk of source) {
           const localId = pendingAckIds[chunk.id];
-          // tslint:disable-next-line:no-delete
+          // tslint:disable-next-line:no-delete no-object-mutation
           delete pendingAckIds[chunk.id];
           chunks.push(localId);
         }
