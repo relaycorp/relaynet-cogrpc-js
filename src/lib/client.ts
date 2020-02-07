@@ -72,7 +72,9 @@ export class CogRPCClient {
     try {
       yield* await pipe(toIterable.source(call), deliverCargo, collectAcknowledgments);
     } catch (error) {
-      throw new CogRPCError(error, 'Unexpected error while delivering cargo');
+      throw error instanceof CogRPCError
+        ? error
+        : new CogRPCError(error, 'Unexpected error while delivering cargo');
     } finally {
       call.end();
     }

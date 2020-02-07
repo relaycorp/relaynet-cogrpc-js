@@ -222,14 +222,14 @@ describe('CogRPCClient', () => {
       const cargoDelivery = client.deliverCargo(
         generateCargoRelays([acknowledgedDelivery, unacknowledgedDelivery]),
       );
+      mockClientDuplexStream.maxAcks = 1;
 
       let error: CogRPCError | undefined;
-      let ack: string | undefined;
+      // tslint:disable-next-line:readonly-array
+      const acks = [];
       try {
         for await (const ackId of cargoDelivery) {
-          expect(ack).toBeUndefined();
-          ack = ackId;
-          mockClientDuplexStream.ackIds = [];
+          acks.push(ackId);
         }
       } catch (err) {
         error = err;
@@ -237,7 +237,7 @@ describe('CogRPCClient', () => {
 
       expect(error).toEqual(new CogRPCError('Server did not acknowledge all cargo deliveries'));
 
-      expect(ack).toEqual(acknowledgedDelivery.localId);
+      expect(acks).toEqual([acknowledgedDelivery.localId]);
 
       expect(mockClientDuplexStream.end).toBeCalledTimes(1);
     });
@@ -257,13 +257,22 @@ class BidiStreamCallSpy extends Duplex {
   // tslint:disable-next-line:readonly-array readonly-keyword
   public ackIds: string[] = [];
 
+  // tslint:disable-next-line:readonly-keyword
+  public maxAcks: number | undefined;
+  // tslint:disable-next-line:readonly-keyword
+  public acksCount = 0;
+
   public addAck(ackId: string): void {
     this.ackIds.push(ackId);
   }
 
   public _read(_size: number): void {
     while (this.ackIds.length) {
+      if (this.maxAcks !== undefined && this.maxAcks <= this.acksCount) {
+        break;
+      }
       const canPushAgain = this.push({ id: this.ackIds.shift() });
+      this.acksCount++;
       if (!canPushAgain) {
         return;
       }
