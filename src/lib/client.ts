@@ -2,7 +2,7 @@ import { CargoDelivery, RelaynetError } from '@relaycorp/relaynet-core';
 import * as grpc from 'grpc';
 import pipe from 'it-pipe';
 import * as toIterable from 'stream-to-it';
-import uuid = require('uuid-random');
+import uuid from 'uuid-random';
 
 import { CargoDeliveryAck, CargoRelayService, GrpcClient } from './grpcService';
 
