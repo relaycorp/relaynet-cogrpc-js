@@ -1,4 +1,4 @@
-import { CargoDelivery } from '@relaycorp/relaynet-core';
+import { CargoDelivery, RelaynetError } from '@relaycorp/relaynet-core';
 import * as grpc from 'grpc';
 import pipe from 'it-pipe';
 import * as toIterable from 'stream-to-it';
@@ -7,6 +7,8 @@ import uuid from 'uuid-random';
 import { CargoDeliveryAck, CargoRelayService, GrpcClient } from './grpcService';
 
 const DEADLINE_SECONDS = 2;
+
+export class CogRPCError extends RelaynetError {}
 
 // tslint:disable-next-line:max-classes-per-file
 export class CogRPCClient {
@@ -31,31 +33,48 @@ export class CogRPCClient {
       deadline,
     });
 
-    const output = await pipe(
-      toIterable.source(call),
-      async (source: AsyncIterable<CargoDeliveryAck>) => {
-        for (const relay of cargoRelay) {
-          const deliveryId = uuid();
-          call.write({ id: deliveryId, cargo: relay.cargo });
-          // tslint:disable-next-line:no-object-mutation
-          pendingAckIds[deliveryId] = relay.localId;
-        }
+    call.on('end', () => {
+      call.end();
+    });
 
-        // tslint:disable-next-line:readonly-array
-        const chunks: string[] = [];
-        for await (const chunk of source) {
-          const localId = pendingAckIds[chunk.id];
-          // tslint:disable-next-line:no-delete no-object-mutation
-          delete pendingAckIds[chunk.id];
-          chunks.push(localId);
-        }
-        return chunks;
-      },
-    );
+    try {
+      const output = await pipe(
+        toIterable.source(call),
+        async (source: AsyncIterable<CargoDeliveryAck>) => {
+          for (const relay of cargoRelay) {
+            const deliveryId = uuid();
+            call.write({ id: deliveryId, cargo: relay.cargo });
+            // tslint:disable-next-line:no-object-mutation
+            pendingAckIds[deliveryId] = relay.localId;
+          }
 
-    // TODO: Stop consuming the iterator and return it as is
-    for (const ack of output) {
-      yield ack;
+          // tslint:disable-next-line:readonly-array
+          const chunks: string[] = [];
+          for await (const chunk of source) {
+            const localId = pendingAckIds[chunk.id];
+            if (localId === undefined) {
+              throw new CogRPCError(
+                `Received unknown acknowledgment "${chunk.id}" from the server`,
+              );
+            }
+            // tslint:disable-next-line:no-delete no-object-mutation
+            delete pendingAckIds[chunk.id];
+            chunks.push(localId);
+          }
+          if (Object.getOwnPropertyNames(pendingAckIds).length !== 0) {
+            throw new CogRPCError('Server did not acknowledge all cargo deliveries');
+          }
+          return chunks;
+        },
+      );
+
+      // TODO: Stop consuming the iterator and return it as is
+      for (const ack of output) {
+        yield ack;
+      }
+
+    } finally {
+      call.end();
     }
   }
 }
