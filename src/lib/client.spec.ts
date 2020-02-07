@@ -164,13 +164,12 @@ describe('CogRPCClient', () => {
 
     test('Stream errors should be thrown', async () => {
       const client = new CogRPCClient(stubServerAddress);
-      const error = new CogRPCError('Bazinga');
+      const error = new Error('Random error found');
 
       const localId = 'original-id';
 
       function* generateRelays(): IterableIterator<CargoDelivery> {
         yield { localId, cargo: Buffer.from('foo') };
-        mockClientDuplexStream.emit('error', error);
       }
 
       // tslint:disable-next-line:readonly-array
@@ -179,9 +178,12 @@ describe('CogRPCClient', () => {
         (async () => {
           for await (const ackId of client.deliverCargo(generateRelays())) {
             acks.push(ackId);
+            if (acks.length === 1) {
+              mockClientDuplexStream.emit('error', error);
+            }
           }
         })(),
-      ).rejects.toEqual(error);
+      ).rejects.toEqual(new CogRPCError(error, 'Unexpected error while delivering cargo'));
 
       expect(acks).toEqual([localId]);
 

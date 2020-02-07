@@ -52,11 +52,9 @@ export class CogRPCClient {
       yield* source;
     }
 
-    async function collectAcknowledgments(
+    async function* collectAcknowledgments(
       source: AsyncIterable<CargoDeliveryAck>,
-    ): Promise<readonly string[]> {
-      // tslint:disable-next-line:readonly-array
-      const chunks: string[] = [];
+    ): AsyncIterable<string> {
       for await (const chunk of source) {
         const localId = pendingAckIds[chunk.id];
         if (localId === undefined) {
@@ -64,21 +62,17 @@ export class CogRPCClient {
         }
         // tslint:disable-next-line:no-delete no-object-mutation
         delete pendingAckIds[chunk.id];
-        chunks.push(localId);
+        yield localId;
       }
       if (Object.getOwnPropertyNames(pendingAckIds).length !== 0) {
         throw new CogRPCError('Server did not acknowledge all cargo deliveries');
       }
-      return chunks;
     }
 
     try {
-      const output = await pipe(toIterable.source(call), deliverCargo, collectAcknowledgments);
-
-      // TODO: Stop consuming the iterator and return it as is
-      for (const ack of output) {
-        yield ack;
-      }
+      yield* await pipe(toIterable.source(call), deliverCargo, collectAcknowledgments);
+    } catch (error) {
+      throw new CogRPCError(error, 'Unexpected error while delivering cargo');
     } finally {
       call.end();
     }
