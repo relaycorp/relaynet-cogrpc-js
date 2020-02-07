@@ -6,44 +6,13 @@ import * as jestDateMock from 'jest-date-mock';
 import { Duplex } from 'stream';
 
 import { getMockContext, mockSpy } from './_test_utils';
+import { CogRPCClient, CogRPCError } from './client';
 import * as grpcService from './grpcService';
 
-import MockInstance = jest.MockInstance;
-
-class BidiStreamCallSpy extends Duplex {
-  public readonly end = jest.fn();
-  // tslint:disable-next-line:readonly-array
-  public readonly cargoDeliveries: grpcService.CargoDelivery[] = [];
-  // tslint:disable-next-line:readonly-array readonly-keyword
-  public ackIds: string[] = [];
-
-  public addAck(ackId: string): void {
-    this.ackIds.push(ackId);
-  }
-
-  public _read(_size: number): void {
-    while (this.ackIds.length) {
-      const canPushAgain = this.push({ id: this.ackIds.shift() });
-      if (!canPushAgain) {
-        return;
-      }
-    }
-
-    this.push(null);
-  }
-
-  public _write(
-    ack: grpcService.CargoDelivery,
-    _encoding: string,
-    callback: (error?: Error | null) => void,
-  ): void {
-    this.cargoDeliveries.push(ack);
-    callback(null);
-  }
-}
+//region Fixtures
 
 let mockClientDuplexStream: BidiStreamCallSpy;
-let mockGrcpClient: Partial<grpc.Client> & { readonly deliverCargo: MockInstance<any, any> };
+let mockGrcpClient: Partial<grpc.Client> & { readonly deliverCargo: jest.MockInstance<any, any> };
 beforeEach(() => {
   mockClientDuplexStream = new BidiStreamCallSpy({ objectMode: true });
   mockGrcpClient = {
@@ -63,19 +32,7 @@ afterEach(() => {
 
 const stubServerAddress = 'https://relaycorp.tech';
 
-const mockStubUuids: readonly string[] = ['first-uuid4', 'second-uuid4'];
-jest.mock('uuid-random', () => {
-  const mockUuidRandom = jest.fn();
-  mockStubUuids.map(s => mockUuidRandom.mockReturnValueOnce(s));
-  mockUuidRandom.mockImplementationOnce(() => {
-    throw new Error('Exhausted stub UUID4 array');
-  });
-  return {
-    __esModule: true,
-    default: mockUuidRandom,
-  };
-});
-import { CogRPCClient, CogRPCError } from './client';
+//endregion
 
 describe('CogRPCClient', () => {
   describe('constructor', () => {
@@ -152,7 +109,6 @@ describe('CogRPCClient', () => {
         { localId: 'one', cargo: Buffer.from('foo') },
         { localId: 'two', cargo: Buffer.from('bar') },
       ];
-      [mockStubUuids[0], mockStubUuids[1]].map(s => mockClientDuplexStream.addAck(s));
 
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays(cargoRelays)));
 
@@ -164,19 +120,17 @@ describe('CogRPCClient', () => {
 
     test('Relay ids from input iterator should be replaced before sending to server', async () => {
       const client = new CogRPCClient(stubServerAddress);
-      mockClientDuplexStream.addAck(mockStubUuids[0]);
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay])));
 
       expect(mockClientDuplexStream.cargoDeliveries).toHaveLength(1);
-      expect(mockClientDuplexStream.cargoDeliveries[0]).toHaveProperty('id', mockStubUuids[0]);
+      expect(mockClientDuplexStream.cargoDeliveries[0]).toHaveProperty('id');
+      expect(mockClientDuplexStream.cargoDeliveries[0]).not.toHaveProperty('id', stubRelay.localId);
     });
 
     test('Id of each relay acknowledged by the server should be yielded', async () => {
       const client = new CogRPCClient(stubServerAddress);
-
-      mockClientDuplexStream.addAck(mockStubUuids[0]);
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       const deliveredCargoIds = client.deliverCargo(generateCargoRelays([stubRelay]));
@@ -201,7 +155,6 @@ describe('CogRPCClient', () => {
 
     test('Connection should be closed when all relays have been acknowledged', async () => {
       const client = new CogRPCClient(stubServerAddress);
-      mockClientDuplexStream.addAck(mockStubUuids[0]);
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay])));
@@ -222,18 +175,20 @@ describe('CogRPCClient', () => {
 
       // tslint:disable-next-line:readonly-array
       const acks: string[] = [];
-      await expect(async () => {
-        for await (const ackId of client.deliverCargo(generateRelays())) {
-          acks.push(ackId);
-        }
-      }).rejects.toEqual(error);
+      await expect(
+        (async () => {
+          for await (const ackId of client.deliverCargo(generateRelays())) {
+            acks.push(ackId);
+          }
+        })(),
+      ).rejects.toEqual(error);
 
       expect(acks).toEqual([localId]);
 
       expect(mockClientDuplexStream.end).toBeCalledTimes(1);
     });
 
-    test('Connection should be closed when the server ends it first', async () => {
+    test('Call should be ended when the server ends it while delivering cargo', async () => {
       const client = new CogRPCClient(stubServerAddress);
 
       const localId = 'original-id';
@@ -262,17 +217,17 @@ describe('CogRPCClient', () => {
       const acknowledgedDelivery = { localId: 'acknowledged', cargo: Buffer.from('foo') };
       const unacknowledgedDelivery = { localId: 'unacknowledged', cargo: Buffer.from('bar') };
 
-      mockClientDuplexStream.addAck(mockStubUuids[0]);
       const cargoDelivery = client.deliverCargo(
         generateCargoRelays([acknowledgedDelivery, unacknowledgedDelivery]),
       );
 
       let error: CogRPCError | undefined;
-      // tslint:disable-next-line:readonly-array
-      const acks: string[] = [];
+      let ack: string | undefined;
       try {
         for await (const ackId of cargoDelivery) {
-          acks.push(ackId);
+          expect(ack).toBeUndefined();
+          ack = ackId;
+          mockClientDuplexStream.ackIds = [];
         }
       } catch (err) {
         error = err;
@@ -280,7 +235,7 @@ describe('CogRPCClient', () => {
 
       expect(error).toEqual(new CogRPCError('Server did not acknowledge all cargo deliveries'));
 
-      expect(acks).toEqual([acknowledgedDelivery.localId]);
+      expect(ack).toEqual(acknowledgedDelivery.localId);
 
       expect(mockClientDuplexStream.end).toBeCalledTimes(1);
     });
@@ -292,6 +247,39 @@ describe('CogRPCClient', () => {
     }
   });
 });
+
+class BidiStreamCallSpy extends Duplex {
+  public readonly end = jest.fn();
+  // tslint:disable-next-line:readonly-array
+  public readonly cargoDeliveries: grpcService.CargoDelivery[] = [];
+  // tslint:disable-next-line:readonly-array readonly-keyword
+  public ackIds: string[] = [];
+
+  public addAck(ackId: string): void {
+    this.ackIds.push(ackId);
+  }
+
+  public _read(_size: number): void {
+    while (this.ackIds.length) {
+      const canPushAgain = this.push({ id: this.ackIds.shift() });
+      if (!canPushAgain) {
+        return;
+      }
+    }
+
+    this.push(null);
+  }
+
+  public _write(
+    ack: grpcService.CargoDelivery,
+    _encoding: string,
+    callback: (error?: Error | null) => void,
+  ): void {
+    this.cargoDeliveries.push(ack);
+    this.addAck(ack.id);
+    callback(null);
+  }
+}
 
 async function consumeAsyncIterable<V>(iter: AsyncIterable<V>): Promise<readonly V[]> {
   // tslint:disable-next-line:readonly-array
