@@ -6,8 +6,8 @@ import * as jestDateMock from 'jest-date-mock';
 import { Duplex } from 'stream';
 
 import { getMockContext, mockSpy } from './_test_utils';
-import { CogRPCClient, CogRPCError } from './client';
 import * as grpcService from './grpcService';
+
 import MockInstance = jest.MockInstance;
 
 class BidiStreamCallSpy extends Duplex {
@@ -63,13 +63,19 @@ afterEach(() => {
 
 const stubServerAddress = 'https://relaycorp.tech';
 
-const mockStubUuid4 = '56e95d8a-6be2-4020-bb36-5dd0da36c181';
+const mockStubUuids: readonly string[] = ['first-uuid4', 'second-uuid4'];
 jest.mock('uuid-random', () => {
+  const mockUuidRandom = jest.fn();
+  mockStubUuids.map(s => mockUuidRandom.mockReturnValueOnce(s));
+  mockUuidRandom.mockImplementationOnce(() => {
+    throw new Error('Exhausted stub UUID4 array');
+  });
   return {
     __esModule: true,
-    default: jest.fn().mockImplementation(() => mockStubUuid4),
+    default: mockUuidRandom,
   };
 });
+import { CogRPCClient, CogRPCError } from './client';
 
 describe('CogRPCClient', () => {
   describe('constructor', () => {
@@ -146,6 +152,8 @@ describe('CogRPCClient', () => {
         { localId: 'one', cargo: Buffer.from('foo') },
         { localId: 'two', cargo: Buffer.from('bar') },
       ];
+      [mockStubUuids[0], mockStubUuids[1]].map(s => mockClientDuplexStream.addAck(s));
+
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays(cargoRelays)));
 
       expect(mockClientDuplexStream.cargoDeliveries).toEqual([
@@ -156,17 +164,19 @@ describe('CogRPCClient', () => {
 
     test('Relay ids from input iterator should be replaced before sending to server', async () => {
       const client = new CogRPCClient(stubServerAddress);
+      mockClientDuplexStream.addAck(mockStubUuids[0]);
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay])));
 
       expect(mockClientDuplexStream.cargoDeliveries).toHaveLength(1);
-      expect(mockClientDuplexStream.cargoDeliveries[0]).toHaveProperty('id', mockStubUuid4);
+      expect(mockClientDuplexStream.cargoDeliveries[0]).toHaveProperty('id', mockStubUuids[0]);
     });
 
     test('Id of each relay acknowledged by the server should be yielded', async () => {
       const client = new CogRPCClient(stubServerAddress);
-      mockClientDuplexStream.addAck(mockStubUuid4);
+
+      mockClientDuplexStream.addAck(mockStubUuids[0]);
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       const deliveredCargoIds = client.deliverCargo(generateCargoRelays([stubRelay]));
@@ -191,7 +201,7 @@ describe('CogRPCClient', () => {
 
     test('Connection should be closed when all relays have been acknowledged', async () => {
       const client = new CogRPCClient(stubServerAddress);
-      mockClientDuplexStream.addAck(mockStubUuid4);
+      mockClientDuplexStream.addAck(mockStubUuids[0]);
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay])));
@@ -252,7 +262,7 @@ describe('CogRPCClient', () => {
       const acknowledgedDelivery = { localId: 'acknowledged', cargo: Buffer.from('foo') };
       const unacknowledgedDelivery = { localId: 'unacknowledged', cargo: Buffer.from('bar') };
 
-      mockClientDuplexStream.addAck(mockStubUuid4);
+      mockClientDuplexStream.addAck(mockStubUuids[0]);
       const cargoDelivery = client.deliverCargo(
         generateCargoRelays([acknowledgedDelivery, unacknowledgedDelivery]),
       );

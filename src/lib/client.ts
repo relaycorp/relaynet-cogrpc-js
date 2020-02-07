@@ -33,21 +33,19 @@ export class CogRPCClient {
       deadline,
     });
 
-    call.on('end', () => {
-      call.end();
-    });
-
     try {
       const output = await pipe(
         toIterable.source(call),
-        async (source: AsyncIterable<CargoDeliveryAck>) => {
+        async function*(source: AsyncIterable<CargoDeliveryAck>): AsyncIterable<CargoDeliveryAck> {
           for (const relay of cargoRelay) {
             const deliveryId = uuid();
             call.write({ id: deliveryId, cargo: relay.cargo });
             // tslint:disable-next-line:no-object-mutation
             pendingAckIds[deliveryId] = relay.localId;
           }
-
+          yield* source;
+        },
+        async (source: AsyncIterable<CargoDeliveryAck>) => {
           // tslint:disable-next-line:readonly-array
           const chunks: string[] = [];
           for await (const chunk of source) {
@@ -72,7 +70,6 @@ export class CogRPCClient {
       for (const ack of output) {
         yield ack;
       }
-
     } finally {
       call.end();
     }
