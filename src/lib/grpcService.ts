@@ -6,6 +6,7 @@ import {
   GrpcObject,
   loadPackageDefinition,
   Metadata,
+  ServiceDefinition,
 } from 'grpc';
 
 const cogrpcPackageDefinition = loadSync(__dirname + '/cogrpc.proto', { keepCase: true });
@@ -33,3 +34,8 @@ export interface CargoRelayService {
 
 // tslint:disable-next-line:variable-name
 export const GrpcClient: typeof Client = service.CargoRelay as typeof Client;
+
+// @ts-ignore
+export const CARGO_DELIVERY_GRPC_SERVICE = GrpcClient.service as ServiceDefinition<
+  CargoRelayService
+>;
