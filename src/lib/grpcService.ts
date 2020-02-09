@@ -6,6 +6,7 @@ import {
   GrpcObject,
   loadPackageDefinition,
   Metadata,
+  ServerDuplexStream,
   ServiceDefinition,
 } from 'grpc';
 
@@ -22,20 +23,34 @@ export interface CargoDeliveryAck {
   readonly id: string;
 }
 
-export type CargoRelayStream<Req, Res> = (
+//region Client interface
+
+type CargoRelayClientMethod<Req, Res> = (
   metadata?: Metadata,
   options?: CallOptions,
 ) => ClientDuplexStream<Req, Res>;
-
-export interface CargoRelayService {
-  readonly deliverCargo: CargoRelayStream<CargoDelivery, CargoDeliveryAck>;
-  readonly collectCargo: CargoRelayStream<CargoDeliveryAck, CargoDelivery>;
+export interface CargoRelayClientMethodSet {
+  readonly collectCargo: CargoRelayClientMethod<CargoDeliveryAck, CargoDelivery>;
+  readonly deliverCargo: CargoRelayClientMethod<CargoDelivery, CargoDeliveryAck>;
 }
 
 // tslint:disable-next-line:variable-name
-export const CargoDeliveryClient: typeof Client = service.CargoRelay as typeof Client;
+export const CargoRelayClient: typeof Client = service.CargoRelay as typeof Client;
+
+//endregion
+
+//region Server interface
+
+type CargoRelayServerMethod<Req, Res> = (call: ServerDuplexStream<Req, Res>) => void;
+export interface CargoRelayServerMethodSet {
+  readonly collectCargo: CargoRelayServerMethod<CargoDeliveryAck, CargoDelivery>;
+  readonly deliverCargo: CargoRelayServerMethod<CargoDelivery, CargoDeliveryAck>;
+}
 
 // @ts-ignore
-export const CARGO_DELIVERY_GRPC_SERVICE = CargoDeliveryClient.service as ServiceDefinition<
-  CargoRelayService
+// tslint:disable-next-line:variable-name
+export const CargoRelayService = CargoRelayClient.service as ServiceDefinition<
+  CargoRelayServerMethodSet
 >;
+
+//endregion

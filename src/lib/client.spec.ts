@@ -20,9 +20,15 @@ beforeEach(() => {
     deliverCargo: jest.fn().mockReturnValueOnce(mockCargoRelayStream),
   };
 });
-jest.mock('./grpcService', () => {
+jest.mock('grpc', () => {
+  const actualGrpc = jest.requireActual('grpc');
   return {
-    CargoDeliveryClient: jest.fn().mockImplementation(() => mockGrcpClient),
+    ...actualGrpc,
+    loadPackageDefinition(): grpc.GrpcObject {
+      return {
+        relaynet: { cogrpc: { CargoRelay: jest.fn().mockImplementation(() => mockGrcpClient) } },
+      };
+    },
   };
 });
 
@@ -43,8 +49,8 @@ describe('CogRPCClient', () => {
       // tslint:disable-next-line:no-unused-expression
       new CogRPCClient(stubServerAddress);
 
-      expect(grpcService.CargoDeliveryClient).toBeCalledTimes(1);
-      const clientInitializationArgs = getMockContext(grpcService.CargoDeliveryClient).calls[0];
+      expect(grpcService.CargoRelayClient).toBeCalledTimes(1);
+      const clientInitializationArgs = getMockContext(grpcService.CargoRelayClient).calls[0];
       expect(clientInitializationArgs[0]).toEqual(stubServerAddress);
     });
 
@@ -54,7 +60,7 @@ describe('CogRPCClient', () => {
 
       expect(createSslSpy).toBeCalledTimes(1);
       const credentials = createSslSpy.mock.results[0].value;
-      const clientInitializationArgs = getMockContext(grpcService.CargoDeliveryClient).calls[0];
+      const clientInitializationArgs = getMockContext(grpcService.CargoRelayClient).calls[0];
       expect(clientInitializationArgs[1]).toBe(credentials);
     });
 
@@ -64,7 +70,7 @@ describe('CogRPCClient', () => {
 
       expect(createInsecureSpy).toBeCalledTimes(1);
       const credentials = createInsecureSpy.mock.results[0].value;
-      const clientInitializationArgs = getMockContext(grpcService.CargoDeliveryClient).calls[0];
+      const clientInitializationArgs = getMockContext(grpcService.CargoRelayClient).calls[0];
       expect(clientInitializationArgs[1]).toBe(credentials);
     });
   });
