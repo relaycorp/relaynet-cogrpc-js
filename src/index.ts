@@ -1,2 +1,7 @@
 export { CogRPCClient, CogRPCError } from './lib/client';
-export { CARGO_DELIVERY_GRPC_SERVICE, CargoDelivery, CargoDeliveryAck } from './lib/grpcService';
+export {
+  CARGO_DELIVERY_GRPC_SERVICE,
+  CargoDelivery,
+  CargoDeliveryAck,
+  CargoDeliveryStream,
+} from './lib/grpcService';
