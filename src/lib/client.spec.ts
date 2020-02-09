@@ -1,6 +1,6 @@
 // tslint:disable:no-let no-object-mutation
 
-import { CargoDelivery } from '@relaycorp/relaynet-core';
+import { CargoDeliveryRequest } from '@relaycorp/relaynet-core';
 import * as grpc from 'grpc';
 import * as jestDateMock from 'jest-date-mock';
 import { Duplex } from 'stream';
@@ -111,7 +111,7 @@ describe('CogRPCClient', () => {
     test('Each cargo from input iterator should be delivered', async () => {
       const client = new CogRPCClient(stubServerAddress);
 
-      const cargoRelays: readonly CargoDelivery[] = [
+      const cargoRelays: readonly CargoDeliveryRequest[] = [
         { localId: 'one', cargo: Buffer.from('foo') },
         { localId: 'two', cargo: Buffer.from('bar') },
       ];
@@ -174,7 +174,7 @@ describe('CogRPCClient', () => {
 
       const localId = 'original-id';
 
-      function* generateRelays(): IterableIterator<CargoDelivery> {
+      function* generateRelays(): IterableIterator<CargoDeliveryRequest> {
         yield { localId, cargo: Buffer.from('foo') };
       }
 
@@ -201,7 +201,7 @@ describe('CogRPCClient', () => {
 
       const localId = 'original-id';
 
-      function* generateRelays(): IterableIterator<CargoDelivery> {
+      function* generateRelays(): IterableIterator<CargoDeliveryRequest> {
         yield { localId, cargo: Buffer.from('foo') };
         mockCargoRelayStream.emit('end');
         yield { localId: 'should not be sent', cargo: Buffer.from('bar') };
@@ -249,8 +249,8 @@ describe('CogRPCClient', () => {
     });
 
     function* generateCargoRelays(
-      cargoRelays: readonly CargoDelivery[],
-    ): IterableIterator<CargoDelivery> {
+      cargoRelays: readonly CargoDeliveryRequest[],
+    ): IterableIterator<CargoDeliveryRequest> {
       yield* cargoRelays;
     }
   });

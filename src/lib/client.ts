@@ -1,10 +1,15 @@
-import { CargoDelivery, RelaynetError } from '@relaycorp/relaynet-core';
+import { CargoDeliveryRequest, RelaynetError } from '@relaycorp/relaynet-core';
 import * as grpc from 'grpc';
 import pipe from 'it-pipe';
 import * as toIterable from 'stream-to-it';
 import uuid from 'uuid-random';
 
-import { CargoDeliveryAck, CargoRelayClient, CargoRelayClientMethodSet } from './grpcService';
+import {
+  CargoDelivery,
+  CargoDeliveryAck,
+  CargoRelayClient,
+  CargoRelayClientMethodSet,
+} from './grpcService';
 
 const DEADLINE_SECONDS = 2;
 
@@ -23,7 +28,9 @@ export class CogRPCClient {
     this.grpcClient.close();
   }
 
-  public async *deliverCargo(cargoRelay: IterableIterator<CargoDelivery>): AsyncIterable<string> {
+  public async *deliverCargo(
+    cargoRelay: IterableIterator<CargoDeliveryRequest>,
+  ): AsyncIterable<string> {
     // tslint:disable-next-line:readonly-keyword
     const pendingAckIds: { [key: string]: string } = {};
 
@@ -48,7 +55,8 @@ export class CogRPCClient {
           break;
         }
         const deliveryId = uuid();
-        call.write({ id: deliveryId, cargo: relay.cargo });
+        const delivery: CargoDelivery = { id: deliveryId, cargo: relay.cargo };
+        call.write(delivery);
         // tslint:disable-next-line:no-object-mutation
         pendingAckIds[deliveryId] = relay.localId;
       }
