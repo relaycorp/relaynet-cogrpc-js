@@ -3,5 +3,5 @@ export {
   CARGO_DELIVERY_GRPC_SERVICE,
   CargoDelivery,
   CargoDeliveryAck,
-  CargoDeliveryStream,
+  CargoRelayStream,
 } from './lib/grpcService';

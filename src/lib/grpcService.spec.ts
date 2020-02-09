@@ -1,8 +1,8 @@
 // import * as grpc from 'grpc';
 
-import { GrpcClient } from './grpcService';
+import { CargoDeliveryClient } from './grpcService';
 
 test('gRPC service should be computed and output', () => {
-  expect(GrpcClient).toHaveProperty('service.CollectCargo');
-  expect(GrpcClient).toHaveProperty('service.DeliverCargo');
+  expect(CargoDeliveryClient).toHaveProperty('service.CollectCargo');
+  expect(CargoDeliveryClient).toHaveProperty('service.DeliverCargo');
 });

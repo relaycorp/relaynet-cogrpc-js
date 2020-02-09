@@ -22,14 +22,14 @@ export interface CargoDeliveryAck {
   readonly id: string;
 }
 
-export type CargoDeliveryStream<Req, Res> = (
+export type CargoRelayStream<Req, Res> = (
   metadata?: Metadata,
   options?: CallOptions,
 ) => ClientDuplexStream<Req, Res>;
 
 export interface CargoRelayService {
-  readonly deliverCargo: CargoDeliveryStream<CargoDelivery, CargoDeliveryAck>;
-  readonly collectCargo: CargoDeliveryStream<CargoDeliveryAck, CargoDelivery>;
+  readonly deliverCargo: CargoRelayStream<CargoDelivery, CargoDeliveryAck>;
+  readonly collectCargo: CargoRelayStream<CargoDeliveryAck, CargoDelivery>;
 }
 
 // tslint:disable-next-line:variable-name
