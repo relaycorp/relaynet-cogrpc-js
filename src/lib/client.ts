@@ -4,7 +4,7 @@ import pipe from 'it-pipe';
 import * as toIterable from 'stream-to-it';
 import uuid from 'uuid-random';
 
-import { CargoDeliveryAck, CargoRelayService, GrpcClient } from './grpcService';
+import { CargoDeliveryAck, CargoDeliveryClient, CargoRelayService } from './grpcService';
 
 const DEADLINE_SECONDS = 2;
 
@@ -12,11 +12,11 @@ export class CogRPCError extends RelaynetError {}
 
 // tslint:disable-next-line:max-classes-per-file
 export class CogRPCClient {
-  protected readonly grpcClient: InstanceType<typeof GrpcClient>;
+  protected readonly grpcClient: InstanceType<typeof CargoDeliveryClient>;
 
   constructor(serverAddress: string, useTls = true) {
     const credentials = useTls ? grpc.credentials.createSsl() : grpc.credentials.createInsecure();
-    this.grpcClient = new GrpcClient(serverAddress, credentials);
+    this.grpcClient = new CargoDeliveryClient(serverAddress, credentials);
   }
 
   public close(): void {

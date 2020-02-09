@@ -33,9 +33,9 @@ export interface CargoRelayService {
 }
 
 // tslint:disable-next-line:variable-name
-export const GrpcClient: typeof Client = service.CargoRelay as typeof Client;
+export const CargoDeliveryClient: typeof Client = service.CargoRelay as typeof Client;
 
 // @ts-ignore
-export const CARGO_DELIVERY_GRPC_SERVICE = GrpcClient.service as ServiceDefinition<
+export const CARGO_DELIVERY_GRPC_SERVICE = CargoDeliveryClient.service as ServiceDefinition<
   CargoRelayService
 >;
