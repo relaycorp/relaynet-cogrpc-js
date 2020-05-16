@@ -70,7 +70,6 @@
   "dependencies": {
     "@grpc/proto-loader": "^0.5.4",
     "@relaycorp/relaynet-core": "^1.27.1",
-    "env-var": "^5.2.0",
     "grpc": "^1.24.2",
     "it-pipe": "^1.1.0",
     "stream-to-it": "^0.2.0",
