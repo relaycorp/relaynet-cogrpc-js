@@ -5,18 +5,30 @@ import * as grpc from 'grpc';
 import * as jestDateMock from 'jest-date-mock';
 import { Duplex } from 'stream';
 
-import { getMockContext, mockSpy } from './_test_utils';
+import { getMockContext, MockGrpcBidiCall, mockSpy } from './_test_utils';
 import { CogRPCClient, CogRPCError } from './client';
 import * as grpcService from './grpcService';
 
 //region Fixtures
 
-let mockCargoRelayStream: CargoRelayStreamSpy;
-let mockGrcpClient: Partial<grpc.Client> & { readonly deliverCargo: jest.MockInstance<any, any> };
+let mockCargoRelayStream: CargoRelayStreamSpy; // TODO: Change to MockGrpcBidiCall
+let mockCargoCollectionCall: MockGrpcBidiCall<
+  grpcService.CargoDeliveryAck,
+  grpcService.CargoDelivery
+>;
+let mockGrcpClient: Partial<grpc.Client> & {
+  readonly deliverCargo: jest.MockInstance<any, any>;
+  readonly collectCargo: jest.MockInstance<any, any>;
+};
 beforeEach(() => {
   mockCargoRelayStream = new CargoRelayStreamSpy({ objectMode: true });
+  mockCargoCollectionCall = new MockGrpcBidiCall();
   mockGrcpClient = {
     close: jest.fn(),
+    collectCargo: jest.fn().mockImplementation((metadata) => {
+      mockCargoCollectionCall.metadata = metadata;
+      return mockCargoCollectionCall;
+    }),
     deliverCargo: jest.fn().mockReturnValueOnce(mockCargoRelayStream),
   };
 });
@@ -94,7 +106,7 @@ describe('CogRPCClient', () => {
       expect(mockGrcpClient.deliverCargo.mock.calls[0][0]).toEqual(undefined);
     });
 
-    test('Deadline should be set to 2 seconds', async () => {
+    test('Deadline should be set to 3 seconds', async () => {
       const client = new CogRPCClient(stubServerAddress);
 
       const currentDate = new Date();
@@ -104,7 +116,7 @@ describe('CogRPCClient', () => {
       expect(mockGrcpClient.deliverCargo).toBeCalledTimes(1);
 
       const expectedDeadline = new Date(currentDate);
-      expectedDeadline.setSeconds(expectedDeadline.getSeconds() + 2);
+      expectedDeadline.setSeconds(expectedDeadline.getSeconds() + 3);
       expect(mockGrcpClient.deliverCargo.mock.calls[0][1]).toEqual({ deadline: expectedDeadline });
     });
 
@@ -253,6 +265,92 @@ describe('CogRPCClient', () => {
     ): IterableIterator<CargoDeliveryRequest> {
       yield* cargoRelays;
     }
+  });
+
+  describe('collectCargo', () => {
+    const CCA = Buffer.from('The RAMF-serialized CCA');
+
+    test('CCA should be passed in call metadata Authorization', async () => {
+      const client = new CogRPCClient(stubServerAddress);
+
+      await consumeAsyncIterable(client.collectCargo(CCA));
+
+      const authorizationMetadata = mockCargoCollectionCall.metadata!.get('Authorization');
+      expect(authorizationMetadata).toHaveLength(1);
+      expect(authorizationMetadata[0]).toEqual(`Relaynet-CCA ${CCA.toString('base64')}`);
+    });
+
+    test('Deadline should be set to 3 seconds', async () => {
+      const client = new CogRPCClient(stubServerAddress);
+
+      const currentDate = new Date();
+      jestDateMock.advanceTo(currentDate);
+      await consumeAsyncIterable(client.collectCargo(CCA));
+
+      const expectedDeadline = new Date(currentDate);
+      expectedDeadline.setSeconds(expectedDeadline.getSeconds() + 3);
+      expect(mockGrcpClient.collectCargo).toBeCalledTimes(1);
+      expect(mockGrcpClient.collectCargo).toBeCalledWith(expect.anything(), {
+        deadline: expectedDeadline,
+      });
+    });
+
+    test('No cargo should be yielded if none was received', async () => {
+      const client = new CogRPCClient(stubServerAddress);
+
+      await expect(consumeAsyncIterable(client.collectCargo(CCA))).resolves.toHaveLength(0);
+    });
+
+    test('Each cargo received should be yielded serialized', async () => {
+      const client = new CogRPCClient(stubServerAddress);
+      const cargoSerialized = Buffer.from('cargo');
+      mockCargoCollectionCall.output.push({ id: 'the-id', cargo: cargoSerialized });
+
+      const cargoesDelivered = await consumeAsyncIterable(client.collectCargo(CCA));
+
+      expect(cargoesDelivered).toEqual([cargoSerialized]);
+    });
+
+    test('Each cargo received should be acknowledged', async () => {
+      const client = new CogRPCClient(stubServerAddress);
+      const deliveryId = 'the-id';
+      mockCargoCollectionCall.output.push({ id: deliveryId, cargo: Buffer.from('cargo') });
+
+      await consumeAsyncIterable(client.collectCargo(CCA));
+
+      expect(mockCargoCollectionCall.input).toEqual([{ id: deliveryId }]);
+    });
+
+    test('Unprocessed cargo should not be acknowledged', async () => {
+      const client = new CogRPCClient(stubServerAddress);
+      const processedCargoId = 'processed-cargo';
+      mockCargoCollectionCall.output.push({ id: processedCargoId, cargo: Buffer.from('cargo1') });
+      mockCargoCollectionCall.output.push({ id: 'id2', cargo: Buffer.from('cargo2') });
+
+      // Only consume the first cargo:
+      let done = false;
+      for await (const _ of client.collectCargo(CCA)) {
+        if (done) {
+          break;
+        }
+        done = true;
+      }
+
+      // Only the first delivery should be acknowledged
+      expect(mockCargoCollectionCall.input).toEqual([{ id: processedCargoId }]);
+    });
+
+    test('Stream errors should be thrown', async () => {
+      const client = new CogRPCClient(stubServerAddress);
+      mockCargoCollectionCall.readError = new Error('Whoopsie');
+
+      await expect(consumeAsyncIterable(client.collectCargo(CCA))).rejects.toEqual(
+        new CogRPCError(
+          mockCargoCollectionCall.readError,
+          'Unexpected error while collecting cargo',
+        ),
+      );
+    });
   });
 });
 

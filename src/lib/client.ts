@@ -11,7 +11,7 @@ import {
   CargoRelayClientMethodSet,
 } from './grpcService';
 
-const DEADLINE_SECONDS = 2;
+const DEADLINE_SECONDS = 3;
 
 export class CogRPCError extends RelaynetError {}
 
@@ -33,14 +33,9 @@ export class CogRPCClient {
   ): AsyncIterable<string> {
     // tslint:disable-next-line:readonly-keyword
     const pendingAckIds: { [key: string]: string } = {};
-
-    const deadline = new Date();
-    deadline.setSeconds(deadline.getSeconds() + DEADLINE_SECONDS);
     const call = ((this.grpcClient as unknown) as CargoRelayClientMethodSet).deliverCargo(
       undefined,
-      {
-        deadline,
-      },
+      { deadline: makeDeadline() },
     );
 
     // tslint:disable-next-line:no-let
@@ -90,4 +85,32 @@ export class CogRPCClient {
       call.end();
     }
   }
+
+  public async *collectCargo(ccaSerialized: Buffer): AsyncIterable<Buffer> {
+    const metadata = new grpc.Metadata();
+    metadata.add('Authorization', `Relaynet-CCA ${ccaSerialized.toString('base64')}`);
+    const call = ((this.grpcClient as unknown) as CargoRelayClientMethodSet).collectCargo(
+      metadata,
+      { deadline: makeDeadline() },
+    );
+
+    async function* processCargo(source: AsyncIterable<CargoDelivery>): AsyncIterable<Buffer> {
+      for await (const delivery of source) {
+        yield delivery.cargo;
+        call.write({ id: delivery.id });
+      }
+    }
+
+    try {
+      yield* await pipe(toIterable.source(call), processCargo);
+    } catch (error) {
+      throw new CogRPCError(error, 'Unexpected error while collecting cargo');
+    }
+  }
+}
+
+function makeDeadline(): Date {
+  const deadline = new Date();
+  deadline.setSeconds(deadline.getSeconds() + DEADLINE_SECONDS);
+  return deadline;
 }
