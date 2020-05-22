@@ -7,7 +7,9 @@ jobs:
   ci:
     strategy:
       matrix:
-        node: [10, 12]
+        # Node.js 10 support is broken:
+        # https://github.com/relaycorp/relaynet-cogrpc-js/issues/18
+        node: [12]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
