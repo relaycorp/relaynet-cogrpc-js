@@ -12,7 +12,7 @@ export function getMockContext(mockedObject: any): jest.MockContext<any, any> {
 // tslint:disable-next-line:readonly-array
 export function mockSpy<T, Y extends any[]>(
   spy: jest.MockInstance<T, Y>,
-  mockImplementation?: () => any,
+  mockImplementation?: (...args: readonly any[]) => any,
 ): jest.MockInstance<T, Y> {
   beforeEach(() => {
     spy.mockClear();
