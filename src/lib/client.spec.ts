@@ -15,18 +15,7 @@ import {
 import { CogRPCClient, CogRPCError } from './client';
 import * as grpcService from './grpcService';
 
-const DUMMY_CERTIFICATE_DER = Buffer.from('Pretend this is a DER-encoded X.509 cert');
-const mockTlsSocket = {
-  end: mockSpy(jest.fn()),
-  getPeerCertificate: mockSpy(jest.fn(), () => ({ raw: DUMMY_CERTIFICATE_DER })),
-};
 jest.mock('tls');
-beforeEach(() => {
-  ((tls.connect as any) as jest.MockInstance<any, any>).mockImplementation((_, cb) => {
-    setImmediate(cb);
-    return mockTlsSocket;
-  });
-});
 
 //region Fixtures
 
@@ -129,6 +118,18 @@ describe('CogRPCClient', () => {
       const PRIVATE_IP = '192.168.0.1';
       const PORT = 1234;
 
+      const DUMMY_CERTIFICATE_DER = Buffer.from('Pretend this is a DER-encoded X.509 cert');
+      const MOCK_TLS_SOCKET = {
+        end: mockSpy(jest.fn()),
+        getPeerCertificate: mockSpy(jest.fn(), () => ({ raw: DUMMY_CERTIFICATE_DER })),
+      };
+      beforeEach(() => {
+        ((tls.connect as any) as jest.MockInstance<any, any>).mockImplementation((_, cb) => {
+          setImmediate(cb);
+          return MOCK_TLS_SOCKET;
+        });
+      });
+
       describe('Private IP address as host name', () => {
         test('Any TLS certificate should be accepted', async () => {
           await CogRPCClient.init(`https://${PRIVATE_IP}:${PORT}`);
@@ -149,7 +150,7 @@ describe('CogRPCClient', () => {
         test('TLS socket should be closed immediately after use', async () => {
           await CogRPCClient.init(`https://${PRIVATE_IP}`);
 
-          expect(mockTlsSocket.end).toBeCalled();
+          expect(MOCK_TLS_SOCKET.end).toBeCalled();
         });
 
         test('Port 21473 should be used if no port is explicitly set', async () => {
