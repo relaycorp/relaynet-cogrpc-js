@@ -1,0 +1,64 @@
+name: Run CI and potentially release
+on:
+  pull_request:
+  push:
+    branches-ignore: [gh-pages]
+jobs:
+  ci:
+    strategy:
+      matrix:
+        # Node.js 10 support is broken:
+        # https://github.com/relaycorp/relaynet-cogrpc-js/issues/18
+        node: [12]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - run: npm ci
+      - run: npm run static-checks
+      - run: npm run test:ci:unit
+      - run: npm run test:integration
+  release:
+    needs: ci
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - run: npm ci
+      - run: npm run build
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
+
+      - name: Build documentation
+        run: npm run doc
+      - name: Publish documentation
+        uses: peaceiris/actions-gh-pages@v2.10.1
+        env:
+          # We have to use a deploy key instead of GITHUB_TOKEN :(
+          # https://github.com/peaceiris/actions-gh-pages/issues/9
+          ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          PUBLISH_BRANCH: gh-pages
+          PUBLISH_DIR: ./build/docs
+        with:
+          emptyCommits: false
+          commitMessage: "${{ github.event.head_commit.message }} [skip ci]"
