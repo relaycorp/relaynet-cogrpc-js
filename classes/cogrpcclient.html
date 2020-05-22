@@ -2737,6 +2737,9 @@ img {
 				<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-external">
 					<a href="cogrpcclient.html#collectcargo" class="tsd-kind-icon">collect<wbr>Cargo</a>
 				</li>
+				<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-protected tsd-is-external">
+					<a href="cogrpcclient.html#createcredentials" class="tsd-kind-icon">create<wbr>Credentials</a>
+				</li>
 				<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-external">
 					<a href="cogrpcclient.html#delivercargo" class="tsd-kind-icon">deliver<wbr>Cargo</a>
 				</li>
@@ -2817,6 +2820,7 @@ img {
 						<ul class="tsd-index-list">
 							<li class="tsd-kind-method tsd-parent-kind-class tsd-is-external"><a href="cogrpcclient.html#close" class="tsd-kind-icon">close</a></li>
 							<li class="tsd-kind-method tsd-parent-kind-class tsd-is-external"><a href="cogrpcclient.html#collectcargo" class="tsd-kind-icon">collect<wbr>Cargo</a></li>
+							<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected tsd-is-external"><a href="cogrpcclient.html#createcredentials" class="tsd-kind-icon">create<wbr>Credentials</a></li>
 							<li class="tsd-kind-method tsd-parent-kind-class tsd-is-external"><a href="cogrpcclient.html#delivercargo" class="tsd-kind-icon">deliver<wbr>Cargo</a></li>
 						</ul>
 					</section>
@@ -2829,22 +2833,19 @@ img {
 				<a name="constructor" class="tsd-anchor"></a>
 				<h3>constructor</h3>
 				<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class tsd-is-external">
-					<li class="tsd-signature tsd-kind-icon">new <wbr>CogRPCClient<span class="tsd-signature-symbol">(</span>serverAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, useTls<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="cogrpcclient.html" class="tsd-signature-type">CogRPCClient</a></li>
+					<li class="tsd-signature tsd-kind-icon">new <wbr>CogRPCClient<span class="tsd-signature-symbol">(</span>serverUrl<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="cogrpcclient.html" class="tsd-signature-type">CogRPCClient</a></li>
 				</ul>
 				<ul class="tsd-descriptions">
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/3d61c7e/src/lib/client.ts#L20">src/lib/client.ts:20</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/b6cdb92/src/lib/client.ts#L21">src/lib/client.ts:21</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
 						<ul class="tsd-parameters">
 							<li>
-								<h5>serverAddress: <span class="tsd-signature-type">string</span></h5>
-							</li>
-							<li>
-								<h5><span class="tsd-flag ts-flagDefault value">Default value</span> useTls: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = true</span></h5>
+								<h5>serverUrl: <span class="tsd-signature-type">string</span></h5>
 							</li>
 						</ul>
 						<h4 class="tsd-returns-title">Returns <a href="cogrpcclient.html" class="tsd-signature-type">CogRPCClient</a></h4>
@@ -2860,7 +2861,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">grpc<wbr>Client<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">InstanceType</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">typeof </span><span class="tsd-signature-type">CargoRelayClient</span><span class="tsd-signature-symbol">&gt;</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/3d61c7e/src/lib/client.ts#L20">src/lib/client.ts:20</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/b6cdb92/src/lib/client.ts#L21">src/lib/client.ts:21</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -2877,7 +2878,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/3d61c7e/src/lib/client.ts#L27">src/lib/client.ts:27</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/b6cdb92/src/lib/client.ts#L27">src/lib/client.ts:27</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -2894,7 +2895,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/3d61c7e/src/lib/client.ts#L89">src/lib/client.ts:89</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/b6cdb92/src/lib/client.ts#L89">src/lib/client.ts:89</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2904,6 +2905,29 @@ img {
 							</li>
 						</ul>
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">AsyncIterable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">&gt;</span></h4>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-protected tsd-is-external">
+				<a name="createcredentials" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagProtected">Protected</span> create<wbr>Credentials</h3>
+				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-protected tsd-is-external">
+					<li class="tsd-signature tsd-kind-icon">create<wbr>Credentials<span class="tsd-signature-symbol">(</span>serverUrl<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ChannelCredentials</span></li>
+				</ul>
+				<ul class="tsd-descriptions">
+					<li class="tsd-description">
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/b6cdb92/src/lib/client.ts#L111">src/lib/client.ts:111</a></li>
+							</ul>
+						</aside>
+						<h4 class="tsd-parameters-title">Parameters</h4>
+						<ul class="tsd-parameters">
+							<li>
+								<h5>serverUrl: <span class="tsd-signature-type">string</span></h5>
+							</li>
+						</ul>
+						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">ChannelCredentials</span></h4>
 					</li>
 				</ul>
 			</section>
@@ -2917,7 +2941,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/3d61c7e/src/lib/client.ts#L31">src/lib/client.ts:31</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/b6cdb92/src/lib/client.ts#L31">src/lib/client.ts:31</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
