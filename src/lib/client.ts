@@ -19,9 +19,11 @@ export class CogRPCError extends RelaynetError {}
 export class CogRPCClient {
   protected readonly grpcClient: InstanceType<typeof CargoRelayClient>;
 
-  constructor(serverAddress: string, useTls = true) {
+  constructor(serverUrl: string) {
+    const serverUrlParts = new URL(serverUrl);
+    const useTls = serverUrlParts.protocol === 'https:';
     const credentials = useTls ? grpc.credentials.createSsl() : grpc.credentials.createInsecure();
-    this.grpcClient = new CargoRelayClient(serverAddress, credentials);
+    this.grpcClient = new CargoRelayClient(serverUrl, credentials);
   }
 
   public close(): void {
