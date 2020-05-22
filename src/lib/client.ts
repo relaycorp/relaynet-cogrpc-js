@@ -18,9 +18,13 @@ export class CogRPCError extends RelaynetError {}
 
 // tslint:disable-next-line:max-classes-per-file
 export class CogRPCClient {
+  public static init(_serverUrl: string): CogRPCClient {
+    throw new Error('asfdwaxcfas');
+  }
+
   protected readonly grpcClient: InstanceType<typeof CargoRelayClient>;
 
-  constructor(serverUrl: string) {
+  protected constructor(serverUrl: string) {
     this.grpcClient = new CargoRelayClient(serverUrl, this.createCredentials(serverUrl));
   }
 
