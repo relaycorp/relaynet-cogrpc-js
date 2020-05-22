@@ -4,7 +4,13 @@ import { CargoDeliveryRequest } from '@relaycorp/relaynet-core';
 import * as grpc from 'grpc';
 import * as jestDateMock from 'jest-date-mock';
 
-import { getMockContext, MockCargoDeliveryCall, MockGrpcBidiCall, mockSpy } from './_test_utils';
+import {
+  configureMockEnvVars,
+  getMockContext,
+  MockCargoDeliveryCall,
+  MockGrpcBidiCall,
+  mockSpy,
+} from './_test_utils';
 import { CogRPCClient, CogRPCError } from './client';
 import * as grpcService from './grpcService';
 
@@ -56,6 +62,10 @@ describe('CogRPCClient', () => {
     const createSslSpy = mockSpy(jest.spyOn(grpc.credentials, 'createSsl'));
     const createInsecureSpy = mockSpy(jest.spyOn(grpc.credentials, 'createInsecure'));
 
+    const mockEnvVars = configureMockEnvVars({});
+
+    const httpServerAddress = 'http://example.com';
+
     test('gRPC client must be initialized with specified server address', () => {
       // tslint:disable-next-line:no-unused-expression
       new CogRPCClient(httpsServerAddress);
@@ -75,13 +85,27 @@ describe('CogRPCClient', () => {
       expect(clientInitializationArgs[1]).toBe(credentials);
     });
 
-    test.todo('TLS cannot be skipped if COGRPC_REQUIRE_TLS is unset');
+    test('TLS cannot be skipped if COGRPC_REQUIRE_TLS is unset', () => {
+      expect(() => new CogRPCClient(httpServerAddress)).toThrowWithMessage(
+        CogRPCError,
+        `Cannot connect to ${httpServerAddress} because TLS is required`,
+      );
+    });
 
-    test.todo('TLS cannot be skipped if COGRPC_REQUIRE_TLS is enabled');
+    test('TLS cannot be skipped if COGRPC_REQUIRE_TLS is enabled', () => {
+      mockEnvVars({ COGRPC_REQUIRE_TLS: 'true' });
+
+      expect(() => new CogRPCClient(httpServerAddress)).toThrowWithMessage(
+        CogRPCError,
+        `Cannot connect to ${httpServerAddress} because TLS is required`,
+      );
+    });
 
     test('TLS can be skipped if COGRPC_REQUIRE_TLS is disabled', () => {
+      mockEnvVars({ COGRPC_REQUIRE_TLS: 'false' });
+
       // tslint:disable-next-line:no-unused-expression
-      new CogRPCClient('http://example.com');
+      new CogRPCClient(httpServerAddress);
 
       expect(createInsecureSpy).toBeCalledTimes(1);
       const credentials = createInsecureSpy.mock.results[0].value;
