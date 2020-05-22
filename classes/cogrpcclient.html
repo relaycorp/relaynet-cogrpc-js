@@ -2735,6 +2735,9 @@ img {
 					<a href="cogrpcclient.html#close" class="tsd-kind-icon">close</a>
 				</li>
 				<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-external">
+					<a href="cogrpcclient.html#collectcargo" class="tsd-kind-icon">collect<wbr>Cargo</a>
+				</li>
+				<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-external">
 					<a href="cogrpcclient.html#delivercargo" class="tsd-kind-icon">deliver<wbr>Cargo</a>
 				</li>
 			</ul>
@@ -2778,6 +2781,9 @@ img {
 		<li class=" tsd-kind-variable tsd-is-external">
 			<a href="../globals.html#service" class="tsd-kind-icon">service</a>
 		</li>
+		<li class=" tsd-kind-function tsd-is-external">
+			<a href="../globals.html#makedeadline" class="tsd-kind-icon">make<wbr>Deadline</a>
+		</li>
 	</ul>
 </nav>
 <div class="container container-main">
@@ -2810,6 +2816,7 @@ img {
 						<h3>Methods</h3>
 						<ul class="tsd-index-list">
 							<li class="tsd-kind-method tsd-parent-kind-class tsd-is-external"><a href="cogrpcclient.html#close" class="tsd-kind-icon">close</a></li>
+							<li class="tsd-kind-method tsd-parent-kind-class tsd-is-external"><a href="cogrpcclient.html#collectcargo" class="tsd-kind-icon">collect<wbr>Cargo</a></li>
 							<li class="tsd-kind-method tsd-parent-kind-class tsd-is-external"><a href="cogrpcclient.html#delivercargo" class="tsd-kind-icon">deliver<wbr>Cargo</a></li>
 						</ul>
 					</section>
@@ -2828,7 +2835,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/26ecb77/src/lib/client.ts#L20">src/lib/client.ts:20</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/3d61c7e/src/lib/client.ts#L20">src/lib/client.ts:20</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -2853,7 +2860,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">grpc<wbr>Client<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">InstanceType</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">typeof </span><span class="tsd-signature-type">CargoRelayClient</span><span class="tsd-signature-symbol">&gt;</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/26ecb77/src/lib/client.ts#L20">src/lib/client.ts:20</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/3d61c7e/src/lib/client.ts#L20">src/lib/client.ts:20</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -2870,10 +2877,33 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/26ecb77/src/lib/client.ts#L27">src/lib/client.ts:27</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/3d61c7e/src/lib/client.ts#L27">src/lib/client.ts:27</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-external">
+				<a name="collectcargo" class="tsd-anchor"></a>
+				<h3>collect<wbr>Cargo</h3>
+				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-external">
+					<li class="tsd-signature tsd-kind-icon">collect<wbr>Cargo<span class="tsd-signature-symbol">(</span>ccaSerialized<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">AsyncIterable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">&gt;</span></li>
+				</ul>
+				<ul class="tsd-descriptions">
+					<li class="tsd-description">
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/3d61c7e/src/lib/client.ts#L89">src/lib/client.ts:89</a></li>
+							</ul>
+						</aside>
+						<h4 class="tsd-parameters-title">Parameters</h4>
+						<ul class="tsd-parameters">
+							<li>
+								<h5>ccaSerialized: <span class="tsd-signature-type">Buffer</span></h5>
+							</li>
+						</ul>
+						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">AsyncIterable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">&gt;</span></h4>
 					</li>
 				</ul>
 			</section>
@@ -2887,7 +2917,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/26ecb77/src/lib/client.ts#L31">src/lib/client.ts:31</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/3d61c7e/src/lib/client.ts#L31">src/lib/client.ts:31</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
