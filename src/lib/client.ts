@@ -1,4 +1,5 @@
 import { CargoDeliveryRequest, RelaynetError } from '@relaycorp/relaynet-core';
+import { get as getEnvVar } from 'env-var';
 import * as grpc from 'grpc';
 import pipe from 'it-pipe';
 import * as toIterable from 'stream-to-it';
@@ -19,9 +20,8 @@ export class CogRPCError extends RelaynetError {}
 export class CogRPCClient {
   protected readonly grpcClient: InstanceType<typeof CargoRelayClient>;
 
-  constructor(serverAddress: string, useTls = true) {
-    const credentials = useTls ? grpc.credentials.createSsl() : grpc.credentials.createInsecure();
-    this.grpcClient = new CargoRelayClient(serverAddress, credentials);
+  constructor(serverUrl: string) {
+    this.grpcClient = new CargoRelayClient(serverUrl, this.createCredentials(serverUrl));
   }
 
   public close(): void {
@@ -106,6 +106,16 @@ export class CogRPCClient {
     } catch (error) {
       throw new CogRPCError(error, 'Unexpected error while collecting cargo');
     }
+  }
+
+  protected createCredentials(serverUrl: string): grpc.ChannelCredentials {
+    const serverUrlParts = new URL(serverUrl);
+    const useTls = serverUrlParts.protocol === 'https:';
+    const isTlsRequired = getEnvVar('COGRPC_REQUIRE_TLS').default('true').asBool();
+    if (!useTls && isTlsRequired) {
+      throw new CogRPCError(`Cannot connect to ${serverUrl} because TLS is required`);
+    }
+    return useTls ? grpc.credentials.createSsl() : grpc.credentials.createInsecure();
   }
 }
 
