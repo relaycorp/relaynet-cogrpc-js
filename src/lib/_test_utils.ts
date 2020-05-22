@@ -1,7 +1,8 @@
-/* tslint:disable:readonly-keyword */
+/* tslint:disable:readonly-keyword max-classes-per-file */
 import MockInstance = jest.MockInstance;
 import grpc from 'grpc';
 import { Duplex } from 'stream';
+import * as grpcService from './grpcService';
 
 export function getMockContext(mockedObject: any): jest.MockContext<any, any> {
   const mockInstance = (mockedObject as unknown) as jest.MockInstance<any, any>;
@@ -37,6 +38,8 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
 
   public readError?: Error;
 
+  private readPosition = 0;
+
   constructor() {
     super({ objectMode: true });
 
@@ -54,8 +57,10 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
       throw this.readError;
     }
 
-    while (this.output.length) {
-      const canPushAgain = this.push(this.output.shift());
+    while (this.output.length !== 0 && this.readPosition < this.output.length) {
+      const canPushAgain = this.push(this.output[this.readPosition]);
+      // tslint:disable:no-object-mutation
+      this.readPosition += 1;
       if (!canPushAgain) {
         return;
       }
@@ -72,5 +77,23 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
   public end(cb?: () => void): void {
     super.end(cb);
     this.emit('end');
+  }
+}
+
+export class MockCargoDeliveryCall extends MockGrpcBidiCall<
+  grpcService.CargoDelivery,
+  grpcService.CargoDeliveryAck
+> {
+  public maxAcks?: number;
+
+  public _write(
+    value: grpcService.CargoDelivery,
+    _encoding: string,
+    callback: (error?: Error) => void,
+  ): void {
+    super._write(value, _encoding, callback);
+    if (this.maxAcks === undefined || this.output.length < this.maxAcks) {
+      this.output.push({ id: value.id });
+    }
   }
 }
