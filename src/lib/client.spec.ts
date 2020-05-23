@@ -70,7 +70,6 @@ describe('CogRPCClient', () => {
     const httpServerAddress = 'http://example.com';
 
     test('gRPC client must be initialized with specified server address', async () => {
-      // tslint:disable-next-line:no-unused-expression
       await CogRPCClient.init(httpsServerAddress);
 
       expect(grpcService.CargoRelayClient).toBeCalledTimes(1);
@@ -79,7 +78,6 @@ describe('CogRPCClient', () => {
     });
 
     test('TLS should be used if the URL specifies it', async () => {
-      // tslint:disable-next-line:no-unused-expression
       await CogRPCClient.init(httpsServerAddress);
 
       expect(createSslSpy).toBeCalledTimes(1);
@@ -105,7 +103,6 @@ describe('CogRPCClient', () => {
     test('TLS can be skipped if COGRPC_REQUIRE_TLS is disabled', async () => {
       mockEnvVars({ COGRPC_REQUIRE_TLS: 'false' });
 
-      // tslint:disable-next-line:no-unused-expression
       await CogRPCClient.init(httpServerAddress);
 
       expect(createInsecureSpy).toBeCalledTimes(1);
@@ -176,6 +173,18 @@ describe('CogRPCClient', () => {
         expect(tls.connect).not.toBeCalled();
         expect(createSslSpy).toBeCalledWith();
       });
+    });
+
+    test('Incoming messages of up to 9 MiB should be supported', async () => {
+      await CogRPCClient.init(httpsServerAddress);
+
+      expect(grpcService.CargoRelayClient).toBeCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          'grpc.max_receive_message_length': 9_437_184,
+        }),
+      );
     });
   });
 

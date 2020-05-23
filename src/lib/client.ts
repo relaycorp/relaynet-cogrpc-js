@@ -16,6 +16,8 @@ import {
 
 const DEADLINE_SECONDS = 3;
 
+const MAX_INCOMING_MESSAGE_SIZE = 9_437_184;
+
 const COURIER_GRPC_PORT = 21473;
 
 export class CogRPCError extends RelaynetError {}
@@ -30,7 +32,9 @@ export class CogRPCClient {
   protected readonly grpcClient: InstanceType<typeof CargoRelayClient>;
 
   protected constructor(serverUrl: string, credentials: grpc.ChannelCredentials) {
-    this.grpcClient = new CargoRelayClient(serverUrl, credentials);
+    this.grpcClient = new CargoRelayClient(serverUrl, credentials, {
+      'grpc.max_receive_message_length': MAX_INCOMING_MESSAGE_SIZE,
+    });
   }
 
   public close(): void {
