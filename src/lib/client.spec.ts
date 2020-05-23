@@ -272,8 +272,9 @@ describe('CogRPCClient', () => {
       expect(mockCargoDeliveryCall.end).toBeCalledTimes(1);
     });
 
-    test('Connection should be closed when all relays have been acknowledged', async () => {
+    test('Connection should be ended when all relays have been acknowledged', async () => {
       const client = await CogRPCClient.init(httpsServerAddress);
+      mockCargoDeliveryCall.automaticallyEndReadStream = false;
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay])));

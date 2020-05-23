@@ -62,6 +62,8 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
 
   public metadata?: grpc.Metadata;
 
+  public automaticallyEndReadStream = true;
+
   public readError?: Error;
 
   private readPosition = 0;
@@ -92,7 +94,9 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
       }
     }
 
-    this.push(null);
+    if (this.automaticallyEndReadStream) {
+      this.push(null);
+    }
   }
 
   public _write(value: Input, _encoding: string, callback: (error?: Error) => void): void {

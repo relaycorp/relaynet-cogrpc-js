@@ -82,6 +82,10 @@ export class CogRPCClient {
         // tslint:disable-next-line:no-delete no-object-mutation
         delete pendingAckIds[chunk.id];
         yield localId;
+
+        if (Object.getOwnPropertyNames(pendingAckIds).length === 0) {
+          break;
+        }
       }
       if (Object.getOwnPropertyNames(pendingAckIds).length !== 0) {
         throw new CogRPCError('Server did not acknowledge all cargo deliveries');
