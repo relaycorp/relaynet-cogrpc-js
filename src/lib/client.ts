@@ -16,23 +16,25 @@ import {
 
 const DEADLINE_SECONDS = 3;
 
-const MAX_INCOMING_MESSAGE_SIZE = 9_437_184;
-
-const COURIER_GRPC_PORT = 21473;
+const MAX_INCOMING_MESSAGE_SIZE = 9_437_184; // 9 MiB
 
 export class CogRPCError extends RelaynetError {}
 
 // tslint:disable-next-line:max-classes-per-file
 export class CogRPCClient {
   public static async init(serverUrl: string): Promise<CogRPCClient> {
-    const credentials = await createCredentials(serverUrl);
-    return new CogRPCClient(serverUrl, credentials);
+    const serverUrlParts = new URL(serverUrl);
+    const useTls = serverUrlParts.protocol === 'https:';
+    const defaultPort = useTls ? 443 : 80;
+    const port = serverUrlParts.port !== '' ? parseInt(serverUrlParts.port, 10) : defaultPort;
+    const credentials = await createCredentials(useTls, serverUrlParts.hostname, port);
+    return new CogRPCClient(`${serverUrlParts.hostname}:${port}`, credentials);
   }
 
   protected readonly grpcClient: InstanceType<typeof CargoRelayClient>;
 
-  protected constructor(serverUrl: string, credentials: grpc.ChannelCredentials) {
-    this.grpcClient = new CargoRelayClient(serverUrl, credentials, {
+  protected constructor(host: string, credentials: grpc.ChannelCredentials) {
+    this.grpcClient = new CargoRelayClient(host, credentials, {
       'grpc.max_receive_message_length': MAX_INCOMING_MESSAGE_SIZE,
     });
   }
@@ -126,19 +128,19 @@ export class CogRPCClient {
   }
 }
 
-async function createCredentials(serverUrl: string): Promise<grpc.ChannelCredentials> {
-  const serverUrlParts = new URL(serverUrl);
-  const useTls = serverUrlParts.protocol === 'https:';
+async function createCredentials(
+  useTls: boolean,
+  hostname: string,
+  port: number,
+): Promise<grpc.ChannelCredentials> {
   const isTlsRequired = getEnvVar('COGRPC_REQUIRE_TLS').default('true').asBool();
   if (!useTls && isTlsRequired) {
-    throw new CogRPCError(`Cannot connect to ${serverUrl} because TLS is required`);
+    throw new CogRPCError(`Cannot connect to ${hostname}:${port} without TLS`);
   }
-  return useTls
-    ? createTlsCredentials(serverUrlParts.hostname, serverUrlParts.port)
-    : grpc.credentials.createInsecure();
+  return useTls ? createTlsCredentials(hostname, port) : grpc.credentials.createInsecure();
 }
 
-async function createTlsCredentials(host: string, port: string): Promise<grpc.ChannelCredentials> {
+async function createTlsCredentials(host: string, port: number): Promise<grpc.ChannelCredentials> {
   const ipInfo = checkIp(host);
   if (!ipInfo.isValid || ipInfo.isPublicIp) {
     // The host name is a domain name or a public IP address, so we should let the usual certificate
@@ -150,17 +152,17 @@ async function createTlsCredentials(host: string, port: string): Promise<grpc.Ch
   // bug in grpc-node (https://github.com/grpc/grpc-node/issues/663), we can't simply instruct
   // the client to accept self-issued certificates, so we have to download the TLS certificate
   // from the server so we can pass it explicitly to the client.
-  const portNumber = port === '' ? COURIER_GRPC_PORT : parseInt(port, 10);
-  const certificatePem = await retrieveCertificatePem(host, portNumber);
+  const certificateDer = await retrieveCertificateDer(host, port);
+  const certificatePem = derCertificateToPem(certificateDer);
   return grpc.credentials.createSsl(certificatePem);
 }
 
-async function retrieveCertificatePem(host: string, port: number): Promise<Buffer> {
+async function retrieveCertificateDer(host: string, port: number): Promise<Buffer> {
   return new Promise((resolve) => {
     const tlsSocket = tls.connect({ host, port, rejectUnauthorized: false }, () => {
       const certificateDer: Buffer = tlsSocket.getPeerCertificate().raw;
       tlsSocket.end();
-      return resolve(derCertificateToPem(certificateDer));
+      return resolve(certificateDer);
     });
   });
 }
