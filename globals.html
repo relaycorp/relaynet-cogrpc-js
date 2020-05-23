@@ -2759,6 +2759,9 @@ img {
 			<a href="globals.html#deadline_seconds" class="tsd-kind-icon">DEADLINE_<wbr>SECONDS</a>
 		</li>
 		<li class=" tsd-kind-variable tsd-is-external">
+			<a href="globals.html#max_incoming_message_size" class="tsd-kind-icon">MAX_<wbr>INCOMING_<wbr>MESSAGE_<wbr>SIZE</a>
+		</li>
+		<li class=" tsd-kind-variable tsd-is-external">
 			<a href="globals.html#cogrpcpackagedefinition" class="tsd-kind-icon">cogrpc<wbr>Package<wbr>Definition</a>
 		</li>
 		<li class=" tsd-kind-variable tsd-is-external">
@@ -2830,6 +2833,7 @@ img {
 							<li class="tsd-kind-variable tsd-is-external"><a href="globals.html#cargorelayclient" class="tsd-kind-icon">Cargo<wbr>Relay<wbr>Client</a></li>
 							<li class="tsd-kind-variable tsd-is-external"><a href="globals.html#cargorelayservice" class="tsd-kind-icon">Cargo<wbr>Relay<wbr>Service</a></li>
 							<li class="tsd-kind-variable tsd-is-external"><a href="globals.html#deadline_seconds" class="tsd-kind-icon">DEADLINE_<wbr>SECONDS</a></li>
+							<li class="tsd-kind-variable tsd-is-external"><a href="globals.html#max_incoming_message_size" class="tsd-kind-icon">MAX_<wbr>INCOMING_<wbr>MESSAGE_<wbr>SIZE</a></li>
 							<li class="tsd-kind-variable tsd-is-external"><a href="globals.html#cogrpcpackagedefinition" class="tsd-kind-icon">cogrpc<wbr>Package<wbr>Definition</a></li>
 							<li class="tsd-kind-variable tsd-is-external"><a href="globals.html#grpcpackage" class="tsd-kind-icon">grpc<wbr>Package</a></li>
 							<li class="tsd-kind-variable tsd-is-external"><a href="globals.html#service" class="tsd-kind-icon">service</a></li>
@@ -2856,7 +2860,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Cargo<wbr>Relay<wbr>Client<wbr>Method&lt;Req, Res&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>metadata<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Metadata</span>, options<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">CallOptions</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">ClientDuplexStream</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Req</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Res</span><span class="tsd-signature-symbol">&gt;</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/grpcService.ts#L28">src/lib/grpcService.ts:28</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/grpcService.ts#L28">src/lib/grpcService.ts:28</a></li>
 					</ul>
 				</aside>
 				<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -2899,7 +2903,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Cargo<wbr>Relay<wbr>Server<wbr>Method&lt;Req, Res&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>call<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ServerDuplexStream</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Req</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Res</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/grpcService.ts#L44">src/lib/grpcService.ts:44</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/grpcService.ts#L44">src/lib/grpcService.ts:44</a></li>
 					</ul>
 				</aside>
 				<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -2942,7 +2946,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">COURIER_<wbr>GRPC_<wbr>PORT<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">21473</span><span class="tsd-signature-symbol"> = 21473</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/client.ts#L19">src/lib/client.ts:19</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/client.ts#L21">src/lib/client.ts:21</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -2952,7 +2956,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Cargo<wbr>Relay<wbr>Client<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">typeof </span><span class="tsd-signature-type">Client</span><span class="tsd-signature-symbol"> = service.CargoRelay as typeof Client</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/grpcService.ts#L38">src/lib/grpcService.ts:38</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/grpcService.ts#L38">src/lib/grpcService.ts:38</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -2962,7 +2966,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Cargo<wbr>Relay<wbr>Service<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{}</span><span class="tsd-signature-symbol"> = CargoRelayClient.service as ServiceDefinition&lt;CargoRelayServerMethodSet&gt;</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/grpcService.ts#L52">src/lib/grpcService.ts:52</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/grpcService.ts#L52">src/lib/grpcService.ts:52</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-type-declaration">
@@ -2977,7 +2981,17 @@ img {
 				<div class="tsd-signature tsd-kind-icon">DEADLINE_<wbr>SECONDS<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">3</span><span class="tsd-signature-symbol"> = 3</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/client.ts#L17">src/lib/client.ts:17</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/client.ts#L17">src/lib/client.ts:17</a></li>
+					</ul>
+				</aside>
+			</section>
+			<section class="tsd-panel tsd-member tsd-kind-variable tsd-is-external">
+				<a name="max_incoming_message_size" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagConst">Const</span> MAX_<wbr>INCOMING_<wbr>MESSAGE_<wbr>SIZE</h3>
+				<div class="tsd-signature tsd-kind-icon">MAX_<wbr>INCOMING_<wbr>MESSAGE_<wbr>SIZE<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">9437184</span><span class="tsd-signature-symbol"> = 9437184</span></div>
+				<aside class="tsd-sources">
+					<ul>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/client.ts#L19">src/lib/client.ts:19</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -2987,7 +3001,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">cogrpc<wbr>Package<wbr>Definition<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">PackageDefinition</span><span class="tsd-signature-symbol"> = loadSync(__dirname + &#x27;/cogrpc.proto&#x27;, { keepCase: true })</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/grpcService.ts#L13">src/lib/grpcService.ts:13</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/grpcService.ts#L13">src/lib/grpcService.ts:13</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -2997,7 +3011,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">grpc<wbr>Package<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">GrpcObject</span><span class="tsd-signature-symbol"> = loadPackageDefinition(cogrpcPackageDefinition)</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/grpcService.ts#L14">src/lib/grpcService.ts:14</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/grpcService.ts#L14">src/lib/grpcService.ts:14</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -3007,7 +3021,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">service<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">GrpcObject</span><span class="tsd-signature-symbol"> = (grpcPackage.relaynet as GrpcObject).cogrpc as GrpcObject</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/grpcService.ts#L15">src/lib/grpcService.ts:15</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/grpcService.ts#L15">src/lib/grpcService.ts:15</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -3024,7 +3038,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/client.ts#L121">src/lib/client.ts:121</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/client.ts#L125">src/lib/client.ts:125</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3047,7 +3061,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/client.ts#L133">src/lib/client.ts:133</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/client.ts#L137">src/lib/client.ts:137</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3073,7 +3087,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/client.ts#L160">src/lib/client.ts:160</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/client.ts#L164">src/lib/client.ts:164</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3096,7 +3110,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/client.ts#L168">src/lib/client.ts:168</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/client.ts#L172">src/lib/client.ts:172</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Date</span></h4>
@@ -3113,7 +3127,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/5930340/src/lib/client.ts#L150">src/lib/client.ts:150</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/8e0b127/src/lib/client.ts#L154">src/lib/client.ts:154</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
