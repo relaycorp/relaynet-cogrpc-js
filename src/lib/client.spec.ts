@@ -56,7 +56,8 @@ afterEach(() => {
   jestDateMock.clear();
 });
 
-const httpsServerAddress = 'https://relaycorp.tech';
+const SERVER_HOST_NAME = 'relaycorp.tech';
+const HTTPS_SERVER_ADDRESS = `https://${SERVER_HOST_NAME}`;
 
 //endregion
 
@@ -67,18 +68,18 @@ describe('CogRPCClient', () => {
 
     const mockEnvVars = configureMockEnvVars({});
 
-    const httpServerAddress = 'http://example.com';
+    const HTTP_SERVER_ADDRESS = `http://${SERVER_HOST_NAME}`;
 
     test('gRPC client must be initialized with specified server address', async () => {
-      await CogRPCClient.init(httpsServerAddress);
+      await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       expect(grpcService.CargoRelayClient).toBeCalledTimes(1);
       const clientInitializationArgs = getMockContext(grpcService.CargoRelayClient).calls[0];
-      expect(clientInitializationArgs[0]).toEqual(httpsServerAddress);
+      expect(clientInitializationArgs[0]).toEqual(HTTPS_SERVER_ADDRESS);
     });
 
     test('TLS should be used if the URL specifies it', async () => {
-      await CogRPCClient.init(httpsServerAddress);
+      await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       expect(createSslSpy).toBeCalledTimes(1);
       const credentials = createSslSpy.mock.results[0].value;
@@ -87,23 +88,23 @@ describe('CogRPCClient', () => {
     });
 
     test('TLS cannot be skipped if COGRPC_REQUIRE_TLS is unset', async () => {
-      await expect(CogRPCClient.init(httpServerAddress)).rejects.toEqual(
-        new CogRPCError(`Cannot connect to ${httpServerAddress} because TLS is required`),
+      await expect(CogRPCClient.init(HTTP_SERVER_ADDRESS)).rejects.toEqual(
+        new CogRPCError(`Cannot connect to ${HTTP_SERVER_ADDRESS} because TLS is required`),
       );
     });
 
     test('TLS cannot be skipped if COGRPC_REQUIRE_TLS is enabled', async () => {
       mockEnvVars({ COGRPC_REQUIRE_TLS: 'true' });
 
-      await expect(CogRPCClient.init(httpServerAddress)).rejects.toEqual(
-        new CogRPCError(`Cannot connect to ${httpServerAddress} because TLS is required`),
+      await expect(CogRPCClient.init(HTTP_SERVER_ADDRESS)).rejects.toEqual(
+        new CogRPCError(`Cannot connect to ${HTTP_SERVER_ADDRESS} because TLS is required`),
       );
     });
 
     test('TLS can be skipped if COGRPC_REQUIRE_TLS is disabled', async () => {
       mockEnvVars({ COGRPC_REQUIRE_TLS: 'false' });
 
-      await CogRPCClient.init(httpServerAddress);
+      await CogRPCClient.init(HTTP_SERVER_ADDRESS);
 
       expect(createInsecureSpy).toBeCalledTimes(1);
       const credentials = createInsecureSpy.mock.results[0].value;
@@ -176,7 +177,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Incoming messages of up to 9 MiB should be supported', async () => {
-      await CogRPCClient.init(httpsServerAddress);
+      await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       expect(grpcService.CargoRelayClient).toBeCalledWith(
         expect.anything(),
@@ -189,7 +190,7 @@ describe('CogRPCClient', () => {
   });
 
   test('close() should close the client', async () => {
-    const client = await CogRPCClient.init(httpsServerAddress);
+    const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
     client.close();
 
@@ -199,7 +200,7 @@ describe('CogRPCClient', () => {
 
   describe('deliverCargo', () => {
     test('Call metadata should not be set', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([])));
 
@@ -208,7 +209,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Deadline should be set to 3 seconds', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       const currentDate = new Date();
       jestDateMock.advanceTo(currentDate);
@@ -222,7 +223,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Each cargo from input iterator should be delivered', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       const cargoRelays: readonly CargoDeliveryRequest[] = [
         { localId: 'one', cargo: Buffer.from('foo') },
@@ -238,7 +239,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Relay ids from input iterator should be replaced before sending to server', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay])));
@@ -249,7 +250,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Id of each relay acknowledged by the server should be yielded', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       const deliveredCargoIds = client.deliverCargo(generateCargoRelays([stubRelay]));
@@ -258,7 +259,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Unknown relay ids should end the call and throw an error', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
       const invalidAckId = 'unrecognized-id';
       mockCargoDeliveryCall.output.push({ id: invalidAckId });
 
@@ -273,7 +274,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Connection should be ended when all relays have been acknowledged', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
       mockCargoDeliveryCall.automaticallyEndReadStream = false;
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
@@ -283,7 +284,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Stream errors should be thrown', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
       mockCargoDeliveryCall.readError = new Error('Random error found');
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
@@ -297,7 +298,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Call should be ended when the server ends it while delivering cargo', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       const localId = 'original-id';
 
@@ -320,7 +321,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Error should be thrown when connection ends with outstanding acknowledgments', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
       mockCargoDeliveryCall.maxAcks = 1;
 
       const acknowledgedDelivery = { localId: 'acknowledged', cargo: Buffer.from('foo') };
@@ -359,7 +360,7 @@ describe('CogRPCClient', () => {
     const CCA = Buffer.from('The RAMF-serialized CCA');
 
     test('CCA should be passed in call metadata Authorization', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       await consumeAsyncIterable(client.collectCargo(CCA));
 
@@ -369,7 +370,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Deadline should be set to 3 seconds', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       const currentDate = new Date();
       jestDateMock.advanceTo(currentDate);
@@ -384,13 +385,13 @@ describe('CogRPCClient', () => {
     });
 
     test('No cargo should be yielded if none was received', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
 
       await expect(consumeAsyncIterable(client.collectCargo(CCA))).resolves.toHaveLength(0);
     });
 
     test('Each cargo received should be yielded serialized', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
       const cargoSerialized = Buffer.from('cargo');
       mockCargoCollectionCall.output.push({ id: 'the-id', cargo: cargoSerialized });
 
@@ -400,7 +401,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Each cargo received should be acknowledged', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
       const deliveryId = 'the-id';
       mockCargoCollectionCall.output.push({ id: deliveryId, cargo: Buffer.from('cargo') });
 
@@ -410,7 +411,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Unprocessed cargo should not be acknowledged', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
       const processedCargoId = 'processed-cargo';
       mockCargoCollectionCall.output.push({ id: processedCargoId, cargo: Buffer.from('cargo1') });
       mockCargoCollectionCall.output.push({ id: 'id2', cargo: Buffer.from('cargo2') });
@@ -429,7 +430,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Stream errors should be thrown', async () => {
-      const client = await CogRPCClient.init(httpsServerAddress);
+      const client = await CogRPCClient.init(HTTPS_SERVER_ADDRESS);
       mockCargoCollectionCall.readError = new Error('Whoopsie');
 
       await expect(consumeAsyncIterable(client.collectCargo(CCA))).rejects.toEqual(
