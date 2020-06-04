@@ -1,3 +1,5 @@
+/* tslint:disable:max-classes-per-file */
+
 import { CargoDeliveryRequest, RelaynetError } from '@relaycorp/relaynet-core';
 import checkIp from 'check-ip';
 import { get as getEnvVar } from 'env-var';
@@ -20,8 +22,21 @@ const MAX_INCOMING_MESSAGE_SIZE = 9_437_184; // 9 MiB
 
 export class CogRPCError extends RelaynetError {}
 
-// tslint:disable-next-line:max-classes-per-file
+/**
+ * CogRPC client.
+ */
 export class CogRPCClient {
+  /**
+   * Initialize a CogRPC client.
+   *
+   * If the host name in `serverUrl` is a private IPv4/IPv6 address, self-issued certificates will
+   * be accepted. Under no other circumstances will self-issued certificates be accepted.
+   *
+   * TLS is always required, but it can be made optional in development by setting the environment
+   * variable `COGRPC_REQUIRE_TLS` to `false`.
+   *
+   * @param serverUrl URL to the gRPC server
+   */
   public static async init(serverUrl: string): Promise<CogRPCClient> {
     const serverUrlParts = new URL(serverUrl);
     const useTls = serverUrlParts.protocol === 'https:';
@@ -39,10 +54,18 @@ export class CogRPCClient {
     });
   }
 
+  /**
+   * Close the underlying gRPC connection.
+   */
   public close(): void {
     this.grpcClient.close();
   }
 
+  /**
+   * Deliver the specified cargo to the current server.
+   *
+   * @param cargoRelay
+   */
   public async *deliverCargo(
     cargoRelay: IterableIterator<CargoDeliveryRequest>,
   ): AsyncIterable<string> {
@@ -105,6 +128,11 @@ export class CogRPCClient {
     }
   }
 
+  /**
+   * Collect cargo for a given CCA from the current server.
+   *
+   * @param ccaSerialized
+   */
   public async *collectCargo(ccaSerialized: Buffer): AsyncIterable<Buffer> {
     const metadata = new grpc.Metadata();
     metadata.add('Authorization', `Relaynet-CCA ${ccaSerialized.toString('base64')}`);
