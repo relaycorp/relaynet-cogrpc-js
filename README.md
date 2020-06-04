@@ -1,16 +1,12 @@
 # CogRPC Implementation in JavaScript
 
-This library implements [CogRPC](https://specs.relaynet.network/RS-008) in JavaScript with types included. It offers a CogRPC client and the building blocks to implement a CogRPC server.
-
-As a [Cargo Relay Binding](https://specs.relaynet.network/RS-000#cargo-relay-binding), any CogRPC implementation is exclusively meant to be used by Relaynet gateways and couriers. Relaynet services do not need it at all.
-
-This documentation assumes familiarity with CogRPC.
+This library implements [CogRPC](https://specs.relaynet.network/RS-008) in JavaScript with types included. It offers a CogRPC client and the building blocks to implement a CogRPC server. This documentation assumes familiarity with CogRPC.
 
 ## Install
 
 `@relaycorp/cogrpc` requires Node.js v10 or newer, and the latest stable release can be installed as follows:
 
-```
+```shell
 npm install @relaycorp/cogrpc
 ```
 
@@ -31,11 +27,9 @@ const SERVER_URL = 'https://192.168.43.1';
 const client = await CogRPCClient.init(SERVER_URL);
 ```
 
-If the host name in `SERVER_URL` is a private IPv4/IPv6 address, self-issued certificates will be accepted. Under no other circumstances will self-issued certificates be accepted.
+You can start delivering and collecting cargo once the client is initialized -- Simply use the client methods `deliverCargo()` and `collectCargo()`, respectively.
 
-TLS is always required, but it can be made optional in development by setting the environment variable `COGRPC_REQUIRE_TLS` to `false`.
-
-You can start delivering and collecting cargo once the client is initialized -- Simply use the client methods `deliverCargo()` and `collectCargo()`, respectively. For example, the following is an overly simplistic version of a courier synchronizing cargo with the public gateway at `https://gb.relaycorp.tech`:
+For example, the following is an overly simplistic version of a courier synchronizing cargo with the public gateway at `https://gb.relaycorp.tech`:
 
 ```typescript
 import { CogRPCClient } from '@relaycorp/cogrpc';
@@ -85,7 +79,7 @@ async function* retrieveOutgoingCargoes(
 If you're writing a CogRPC server in a courier or a public gateway, you may want to use the following values exported by this library:
 
 - `CargoRelayService`, which is the ProtoBuf representation of the service.
-- `CargoDelivery` and `CargoDeliveryAck`, which are TypeScript types representing the data exchanged over gRPC.
+- `CargoDelivery` and `CargoDeliveryAck`, the interfaces for the data exchanged over gRPC.
 
 ## Support
 
