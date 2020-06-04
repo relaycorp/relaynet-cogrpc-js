@@ -1,5 +1,5 @@
 {
-  "name": "@relaycorp/relaynet-cogrpc",
+  "name": "@relaycorp/cogrpc",
   "description": "Relaynet CogRPC binding",
   "version": "1.0.0a1",
   "main": "build/main/index.js",
