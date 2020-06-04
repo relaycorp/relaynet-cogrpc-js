@@ -18,6 +18,8 @@ Development releases use the `dev` tag (`@relaycorp/cogrpc@dev`).
 
 ## Use
 
+The next section explains how to use this library. You may also want to read the [API documentation](https://docs.relaycorp.tech/relaynet-cogrpc-js/).
+
 ### As a client
 
 The first step to use the CogRPC client is to initialize it:
