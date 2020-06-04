@@ -2787,14 +2787,86 @@ img {
 <div class="container container-main">
 	<div class="content-wrap">
 		<div class="tsd-panel tsd-typography">
-			<a href="#cogrpc-client-implementation-in-javascript" id="cogrpc-client-implementation-in-javascript" style="color: inherit; text-decoration: none;">
-				<h1>CogRPC Client Implementation in JavaScript</h1>
+			<a href="#cogrpc-implementation-in-javascript" id="cogrpc-implementation-in-javascript" style="color: inherit; text-decoration: none;">
+				<h1>CogRPC Implementation in JavaScript</h1>
 			</a>
-			<p>This project implements a <a href="https://specs.relaynet.link/RS-008">CogRPC</a> client in JavaScript. TypeScript types are included. <a href="https://docs.relaycorp.tech/relaynet-cogrpc-js/">Read documentation online</a>.</p>
-			<p>Environment variables:</p>
+			<p>This library implements <a href="https://specs.relaynet.network/RS-008">CogRPC</a> in JavaScript with types included. It offers a CogRPC client and the building blocks to implement a CogRPC server. This documentation assumes familiarity with CogRPC.</p>
+			<a href="#install" id="install" style="color: inherit; text-decoration: none;">
+				<h2>Install</h2>
+			</a>
+			<p><code>@relaycorp/cogrpc</code> requires Node.js v10 or newer, and the latest stable release can be installed as follows:</p>
+			<pre><code class="language-shell">npm install @relaycorp/cogrpc</code></pre>
+			<p>Development releases use the <code>dev</code> tag (<code>@relaycorp/cogrpc@dev</code>).</p>
+			<a href="#use" id="use" style="color: inherit; text-decoration: none;">
+				<h2>Use</h2>
+			</a>
+			<p>The next section explains how to use this library. You may also want to read the <a href="https://docs.relaycorp.tech/relaynet-cogrpc-js/">API documentation</a>.</p>
+			<a href="#as-a-client" id="as-a-client" style="color: inherit; text-decoration: none;">
+				<h3>As a client</h3>
+			</a>
+			<p>The first step to use the CogRPC client is to initialize it:</p>
+			<pre><code class="language-js"><span class="hljs-keyword">import</span> { CogRPCClient } <span class="hljs-keyword">from</span> <span class="hljs-string">'@relaycorp/cogrpc'</span>;
+
+<span class="hljs-keyword">const</span> SERVER_URL = <span class="hljs-string">'https://192.168.43.1'</span>;
+<span class="hljs-keyword">const</span> client = <span class="hljs-keyword">await</span> CogRPCClient.init(SERVER_URL);</code></pre>
+			<p>You can start delivering and collecting cargo once the client is initialized -- Simply use the client methods <code>deliverCargo()</code> and <code>collectCargo()</code>, respectively.</p>
+			<p>For example, the following is an overly simplistic version of a courier synchronizing cargo with the public gateway at <code>https://gb.relaycorp.tech</code>:</p>
+			<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { CogRPCClient } <span class="hljs-keyword">from</span> <span class="hljs-string">'@relaycorp/cogrpc'</span>;
+<span class="hljs-keyword">import</span> { Cargo, CargoDeliveryRequest } <span class="hljs-keyword">from</span> <span class="hljs-string">'@relaycorp/relaynet-core'</span>;
+<span class="hljs-keyword">import</span> { promises <span class="hljs-keyword">as</span> fs } <span class="hljs-keyword">from</span> <span class="hljs-string">'fs'</span>;
+
+<span class="hljs-keyword">const</span> ROOT_DIR = <span class="hljs-string">'/var/cargoes'</span>;
+
+<span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">main</span>(<span class="hljs-params"></span>): <span class="hljs-title">Promise</span>&lt;<span class="hljs-title">void</span>&gt; </span>{
+  <span class="hljs-keyword">const</span> gwAddress = <span class="hljs-string">'https://gb.relaycorp.tech'</span>;
+  <span class="hljs-keyword">const</span> client = <span class="hljs-keyword">await</span> CogRPCClient.init(gwAddress);
+
+  <span class="hljs-comment">// Deliver cargo</span>
+  <span class="hljs-keyword">const</span> outgoingCargoes = retrieveOutgoingCargoes(gwAddress);
+  <span class="hljs-keyword">for</span> <span class="hljs-keyword">await</span> (<span class="hljs-keyword">const</span> deliveredCargoPath of client.deliverCargo(outgoingCargoes)) {
+    <span class="hljs-comment">// Delete each cargo as soon as it's delivered</span>
+    <span class="hljs-keyword">await</span> fs.unlink(deliveredCargoPath);
+  }
+
+  <span class="hljs-comment">// Collect cargo</span>
+  <span class="hljs-keyword">const</span> cca = <span class="hljs-keyword">await</span> fs.readFile(<span class="hljs-string">`<span class="hljs-subst">${ROOT_DIR}</span>/ccas/<span class="hljs-subst">${gwAddress}</span>`</span>);
+  <span class="hljs-keyword">for</span> <span class="hljs-keyword">await</span> (<span class="hljs-keyword">const</span> incomingCargo of client.collectCargo(cca)) {
+    <span class="hljs-keyword">let</span> cargo: Cargo;
+    <span class="hljs-keyword">try</span> {
+      cargo = <span class="hljs-keyword">await</span> Cargo.deserialize(incomingCargo);
+      <span class="hljs-keyword">await</span> cargo.validate();
+    } <span class="hljs-keyword">catch</span> (error) {
+      <span class="hljs-keyword">continue</span>;
+    }
+    <span class="hljs-keyword">const</span> path = <span class="hljs-string">`<span class="hljs-subst">${ROOT_DIR}</span>/sneakernet-bound/<span class="hljs-subst">${cargo.recipientAddress}</span>/<span class="hljs-subst">${cargo.id}</span>`</span>;
+    <span class="hljs-keyword">await</span> fs.writeFile(path, incomingCargo);
+  }
+}
+
+<span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span>* <span class="hljs-title">retrieveOutgoingCargoes</span>(<span class="hljs-params">
+  publicGatewayAddress: <span class="hljs-built_in">string</span>,
+</span>): <span class="hljs-title">AsyncIterable</span>&lt;<span class="hljs-title">CargoDeliveryRequest</span>&gt; </span>{
+  <span class="hljs-keyword">const</span> dir = <span class="hljs-string">`<span class="hljs-subst">${ROOT_DIR}</span>/internet-bound/<span class="hljs-subst">${publicGatewayAddress}</span>`</span>;
+  <span class="hljs-keyword">for</span> <span class="hljs-keyword">await</span> (<span class="hljs-keyword">const</span> cargoPath of fs.readdir(dir)) {
+    <span class="hljs-keyword">yield</span> { cargo: <span class="hljs-keyword">await</span> fs.readFile(cargoPath), localId: cargoPath };
+  }
+}</code></pre>
+			<a href="#in-a-server" id="in-a-server" style="color: inherit; text-decoration: none;">
+				<h3>In a server</h3>
+			</a>
+			<p>If you&#39;re writing a CogRPC server in a courier or a public gateway, you may want to use the following values exported by this library:</p>
 			<ul>
-				<li><code>COGRPC_REQUIRE_TLS</code></li>
+				<li><code>CargoRelayService</code>, which is the ProtoBuf representation of the service.</li>
+				<li><code>CargoDelivery</code> and <code>CargoDeliveryAck</code>, the interfaces for the data exchanged over gRPC.</li>
 			</ul>
+			<a href="#support" id="support" style="color: inherit; text-decoration: none;">
+				<h2>Support</h2>
+			</a>
+			<p>If you have any questions or comments, please <a href="https://github.com/relaycorp/relaynet-cogrpc-js/issues/new/choose">create an issue on GitHub</a>.</p>
+			<a href="#updates" id="updates" style="color: inherit; text-decoration: none;">
+				<h2>Updates</h2>
+			</a>
+			<p>Releases are automatically published on GitHub and NPM, and the <a href="https://github.com/relaycorp/relaynet-cogrpc-js/releases">changelog can be found on GitHub</a>. This project uses <a href="https://semver.org/">semantic versioning</a>.</p>
 		</div>
 		<section class="tsd-panel-group tsd-index-group">
 			<h2>Index</h2>
@@ -2856,7 +2928,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Cargo<wbr>Relay<wbr>Client<wbr>Method&lt;Req, Res&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>metadata<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Metadata</span>, options<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">CallOptions</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">ClientDuplexStream</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Req</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Res</span><span class="tsd-signature-symbol">&gt;</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/grpcService.ts#L28">src/lib/grpcService.ts:28</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/grpcService.ts#L28">src/lib/grpcService.ts:28</a></li>
 					</ul>
 				</aside>
 				<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -2899,7 +2971,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Cargo<wbr>Relay<wbr>Server<wbr>Method&lt;Req, Res&gt;<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>call<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ServerDuplexStream</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Req</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Res</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">void</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/grpcService.ts#L44">src/lib/grpcService.ts:44</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/grpcService.ts#L44">src/lib/grpcService.ts:44</a></li>
 					</ul>
 				</aside>
 				<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -2942,7 +3014,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Cargo<wbr>Relay<wbr>Client<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">typeof </span><span class="tsd-signature-type">Client</span><span class="tsd-signature-symbol"> = service.CargoRelay as typeof Client</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/grpcService.ts#L38">src/lib/grpcService.ts:38</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/grpcService.ts#L38">src/lib/grpcService.ts:38</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -2952,7 +3024,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">Cargo<wbr>Relay<wbr>Service<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{}</span><span class="tsd-signature-symbol"> = CargoRelayClient.service as ServiceDefinition&lt;CargoRelayServerMethodSet&gt;</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/grpcService.ts#L52">src/lib/grpcService.ts:52</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/grpcService.ts#L52">src/lib/grpcService.ts:52</a></li>
 					</ul>
 				</aside>
 				<div class="tsd-type-declaration">
@@ -2967,7 +3039,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">DEADLINE_<wbr>SECONDS<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">3</span><span class="tsd-signature-symbol"> = 3</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/client.ts#L17">src/lib/client.ts:17</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/client.ts#L19">src/lib/client.ts:19</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -2977,7 +3049,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">MAX_<wbr>INCOMING_<wbr>MESSAGE_<wbr>SIZE<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">9437184</span><span class="tsd-signature-symbol"> = 9437184</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/client.ts#L19">src/lib/client.ts:19</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/client.ts#L21">src/lib/client.ts:21</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -2987,7 +3059,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">cogrpc<wbr>Package<wbr>Definition<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">PackageDefinition</span><span class="tsd-signature-symbol"> = loadSync(__dirname + &#x27;/cogrpc.proto&#x27;, { keepCase: true })</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/grpcService.ts#L13">src/lib/grpcService.ts:13</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/grpcService.ts#L13">src/lib/grpcService.ts:13</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -2997,7 +3069,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">grpc<wbr>Package<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">GrpcObject</span><span class="tsd-signature-symbol"> = loadPackageDefinition(cogrpcPackageDefinition)</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/grpcService.ts#L14">src/lib/grpcService.ts:14</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/grpcService.ts#L14">src/lib/grpcService.ts:14</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -3007,7 +3079,7 @@ img {
 				<div class="tsd-signature tsd-kind-icon">service<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">GrpcObject</span><span class="tsd-signature-symbol"> = (grpcPackage.relaynet as GrpcObject).cogrpc as GrpcObject</span></div>
 				<aside class="tsd-sources">
 					<ul>
-						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/grpcService.ts#L15">src/lib/grpcService.ts:15</a></li>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/grpcService.ts#L15">src/lib/grpcService.ts:15</a></li>
 					</ul>
 				</aside>
 			</section>
@@ -3024,7 +3096,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/client.ts#L131">src/lib/client.ts:131</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/client.ts#L159">src/lib/client.ts:159</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3053,7 +3125,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/client.ts#L143">src/lib/client.ts:143</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/client.ts#L171">src/lib/client.ts:171</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3079,7 +3151,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/client.ts#L170">src/lib/client.ts:170</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/client.ts#L198">src/lib/client.ts:198</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
@@ -3102,7 +3174,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/client.ts#L178">src/lib/client.ts:178</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/client.ts#L206">src/lib/client.ts:206</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Date</span></h4>
@@ -3119,7 +3191,7 @@ img {
 					<li class="tsd-description">
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/d575e5b/src/lib/client.ts#L160">src/lib/client.ts:160</a></li>
+								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/316c52a/src/lib/client.ts#L188">src/lib/client.ts:188</a></li>
 							</ul>
 						</aside>
 						<h4 class="tsd-parameters-title">Parameters</h4>
