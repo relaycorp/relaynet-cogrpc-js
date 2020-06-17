@@ -33,7 +33,7 @@ export class CogRPCClient {
    * be accepted. Under no other circumstances will self-issued certificates be accepted.
    *
    * TLS is always required, but it can be made optional in development by setting the environment
-   * variable `COGRPC_REQUIRE_TLS` to `false`.
+   * variable `COGRPC_TLS_REQUIRED` to `false`.
    *
    * @param serverUrl URL to the gRPC server
    */
@@ -161,7 +161,7 @@ async function createCredentials(
   hostname: string,
   port: number,
 ): Promise<grpc.ChannelCredentials> {
-  const isTlsRequired = getEnvVar('COGRPC_REQUIRE_TLS').default('true').asBool();
+  const isTlsRequired = getEnvVar('COGRPC_TLS_REQUIRED').default('true').asBool();
   if (!useTls && isTlsRequired) {
     throw new CogRPCError(`Cannot connect to ${hostname}:${port} without TLS`);
   }
