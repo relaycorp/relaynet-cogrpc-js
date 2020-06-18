@@ -96,22 +96,22 @@ describe('CogRPCClient', () => {
       expect(clientInitializationArgs[1]).toBe(credentials);
     });
 
-    test('TLS cannot be skipped if COGRPC_REQUIRE_TLS is unset', async () => {
+    test('TLS cannot be skipped if COGRPC_TLS_REQUIRED is unset', async () => {
       await expect(CogRPCClient.init(HTTP_SERVER_URL)).rejects.toEqual(
         new CogRPCError(`Cannot connect to ${SERVER_HOST_NAME}:80 without TLS`),
       );
     });
 
-    test('TLS cannot be skipped if COGRPC_REQUIRE_TLS is enabled', async () => {
-      mockEnvVars({ COGRPC_REQUIRE_TLS: 'true' });
+    test('TLS cannot be skipped if COGRPC_TLS_REQUIRED is enabled', async () => {
+      mockEnvVars({ COGRPC_TLS_REQUIRED: 'true' });
 
       await expect(CogRPCClient.init(HTTP_SERVER_URL)).rejects.toEqual(
         new CogRPCError(`Cannot connect to ${SERVER_HOST_NAME}:80 without TLS`),
       );
     });
 
-    test('TLS can be skipped if COGRPC_REQUIRE_TLS is disabled', async () => {
-      mockEnvVars({ COGRPC_REQUIRE_TLS: 'false' });
+    test('TLS can be skipped if COGRPC_TLS_REQUIRED is disabled', async () => {
+      mockEnvVars({ COGRPC_TLS_REQUIRED: 'false' });
 
       await CogRPCClient.init(HTTP_SERVER_URL);
 
@@ -122,7 +122,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Server port should default to 80 when not using TLS', async () => {
-      mockEnvVars({ COGRPC_REQUIRE_TLS: 'false' });
+      mockEnvVars({ COGRPC_TLS_REQUIRED: 'false' });
 
       await CogRPCClient.init(`http://${SERVER_HOST_NAME}`);
 
