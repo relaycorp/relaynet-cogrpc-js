@@ -450,8 +450,7 @@ describe('CogRPCClient', () => {
 
     test('Call should be ended upon completion', async () => {
       const client = await CogRPCClient.init(HTTPS_SERVER_URL);
-      const cargoSerialized = Buffer.from('cargo');
-      mockCargoCollectionCall.output.push({ id: 'the-id', cargo: cargoSerialized });
+      mockCargoCollectionCall.output.push({ id: 'the-id', cargo: Buffer.from('cargo') });
 
       await consumeAsyncIterable(client.collectCargo(CCA));
 
