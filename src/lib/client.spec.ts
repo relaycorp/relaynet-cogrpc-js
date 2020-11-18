@@ -448,7 +448,16 @@ describe('CogRPCClient', () => {
       expect(mockCargoCollectionCall.input).toEqual([{ id: processedCargoId }]);
     });
 
-    test('Stream errors should be thrown', async () => {
+    test('Call should be ended upon completion', async () => {
+      const client = await CogRPCClient.init(HTTPS_SERVER_URL);
+      mockCargoCollectionCall.output.push({ id: 'the-id', cargo: Buffer.from('cargo') });
+
+      await consumeAsyncIterable(client.collectCargo(CCA));
+
+      expect(mockCargoCollectionCall.emit).toBeCalledWith('end');
+    });
+
+    test('Stream errors should be thrown and cause the call to end', async () => {
       const client = await CogRPCClient.init(HTTPS_SERVER_URL);
       mockCargoCollectionCall.readError = new Error('Whoopsie');
 
@@ -458,6 +467,7 @@ describe('CogRPCClient', () => {
           'Unexpected error while collecting cargo',
         ),
       );
+      expect(mockCargoCollectionCall.emit).toBeCalledWith('end');
     });
   });
 });
