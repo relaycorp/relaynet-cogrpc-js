@@ -1,6 +1,12 @@
 /* tslint:disable:max-classes-per-file */
 
-import { CargoDeliveryRequest, RelaynetError } from '@relaycorp/relaynet-core';
+import {
+  BindingType,
+  CargoDeliveryRequest,
+  PublicNodeAddress,
+  RelaynetError,
+  resolvePublicAddress,
+} from '@relaycorp/relaynet-core';
 import checkIp from 'check-ip';
 import * as grpc from 'grpc';
 import pipe from 'it-pipe';
@@ -18,6 +24,8 @@ import {
 const DEADLINE_SECONDS = 3;
 
 const MAX_INCOMING_MESSAGE_SIZE = 9_437_184; // 9 MiB
+
+const DEFAULT_PORT = 443;
 
 export class CogRPCError extends RelaynetError {}
 
@@ -40,9 +48,9 @@ export class CogRPCClient {
     if (serverUrlParts.protocol !== 'https:') {
       throw new CogRPCError(`Cannot connect to ${serverUrlParts.hostname} without TLS`);
     }
-    const port = serverUrlParts.port !== '' ? parseInt(serverUrlParts.port, 10) : 443;
-    const credentials = await createTlsCredentials(serverUrlParts.hostname, port);
-    return new CogRPCClient(`${serverUrlParts.hostname}:${port}`, credentials);
+    const address = await resolveAddress(serverUrlParts);
+    const credentials = await createTlsCredentials(address.host, address.port);
+    return new CogRPCClient(`${address.host}:${address.port}`, credentials);
   }
 
   protected readonly grpcClient: InstanceType<typeof CargoRelayClient>;
@@ -154,6 +162,15 @@ export class CogRPCClient {
       throw new CogRPCError(error, 'Unexpected error while collecting cargo');
     }
   }
+}
+
+async function resolveAddress(serverUrlParts: URL): Promise<PublicNodeAddress> {
+  if (serverUrlParts.port !== '') {
+    const port = parseInt(serverUrlParts.port, 10);
+    return { host: serverUrlParts.hostname, port };
+  }
+  const srvAddress = await resolvePublicAddress(serverUrlParts.hostname, BindingType.CRC);
+  return srvAddress ?? { host: serverUrlParts.hostname, port: DEFAULT_PORT };
 }
 
 async function createTlsCredentials(host: string, port: number): Promise<grpc.ChannelCredentials> {
