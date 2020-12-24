@@ -2,7 +2,6 @@
 
 import { CargoDeliveryRequest, RelaynetError } from '@relaycorp/relaynet-core';
 import checkIp from 'check-ip';
-import { get as getEnvVar } from 'env-var';
 import * as grpc from 'grpc';
 import pipe from 'it-pipe';
 import * as toIterable from 'stream-to-it';
@@ -32,17 +31,17 @@ export class CogRPCClient {
    * If the host name in `serverUrl` is a private IPv4/IPv6 address, self-issued certificates will
    * be accepted. Under no other circumstances will self-issued certificates be accepted.
    *
-   * TLS is always required, but it can be made optional in development by setting the environment
-   * variable `COGRPC_TLS_REQUIRED` to `false`.
+   * TLS is always required.
    *
    * @param serverUrl URL to the gRPC server
    */
   public static async init(serverUrl: string): Promise<CogRPCClient> {
     const serverUrlParts = new URL(serverUrl);
-    const useTls = serverUrlParts.protocol === 'https:';
-    const defaultPort = useTls ? 443 : 80;
-    const port = serverUrlParts.port !== '' ? parseInt(serverUrlParts.port, 10) : defaultPort;
-    const credentials = await createCredentials(useTls, serverUrlParts.hostname, port);
+    if (serverUrlParts.protocol !== 'https:') {
+      throw new CogRPCError(`Cannot connect to ${serverUrlParts.hostname} without TLS`);
+    }
+    const port = serverUrlParts.port !== '' ? parseInt(serverUrlParts.port, 10) : 443;
+    const credentials = await createTlsCredentials(serverUrlParts.hostname, port);
     return new CogRPCClient(`${serverUrlParts.hostname}:${port}`, credentials);
   }
 
@@ -155,18 +154,6 @@ export class CogRPCClient {
       throw new CogRPCError(error, 'Unexpected error while collecting cargo');
     }
   }
-}
-
-async function createCredentials(
-  useTls: boolean,
-  hostname: string,
-  port: number,
-): Promise<grpc.ChannelCredentials> {
-  const isTlsRequired = getEnvVar('COGRPC_TLS_REQUIRED').default('true').asBool();
-  if (!useTls && isTlsRequired) {
-    throw new CogRPCError(`Cannot connect to ${hostname}:${port} without TLS`);
-  }
-  return useTls ? createTlsCredentials(hostname, port) : grpc.credentials.createInsecure();
 }
 
 async function createTlsCredentials(host: string, port: number): Promise<grpc.ChannelCredentials> {

@@ -1,7 +1,8 @@
 /* tslint:disable:readonly-keyword max-classes-per-file */
-import envVar from 'env-var';
+
 import grpc from 'grpc';
 import { Duplex } from 'stream';
+
 import * as grpcService from './grpcService';
 
 export function getMockContext(mockedObject: any): jest.MockContext<any, any> {
@@ -26,32 +27,6 @@ export function mockSpy<T, Y extends any[]>(
   });
 
   return spy;
-}
-
-interface EnvVarSet {
-  readonly [key: string]: string | undefined;
-}
-export function configureMockEnvVars(envVars: EnvVarSet = {}): (envVars: EnvVarSet) => void {
-  const mockEnvVarGet = jest.spyOn(envVar, 'get');
-
-  function setEnvVars(newEnvVars: EnvVarSet): void {
-    mockEnvVarGet.mockReset();
-    mockEnvVarGet.mockImplementation((...args: readonly any[]) => {
-      const originalEnvVar = jest.requireActual('env-var');
-      const env = originalEnvVar.from(newEnvVars);
-
-      return env.get(...args);
-    });
-  }
-
-  beforeAll(() => setEnvVars(envVars));
-  beforeEach(() => setEnvVars(envVars));
-
-  afterAll(() => {
-    mockEnvVarGet.mockRestore();
-  });
-
-  return (newEnvVars: EnvVarSet) => setEnvVars(newEnvVars);
 }
 
 export class MockGrpcBidiCall<Input, Output> extends Duplex {
