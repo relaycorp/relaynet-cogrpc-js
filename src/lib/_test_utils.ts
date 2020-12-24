@@ -1,5 +1,6 @@
 /* tslint:disable:readonly-keyword max-classes-per-file */
 
+import { CargoDeliveryRequest } from '@relaycorp/relaynet-core';
 import grpc from 'grpc';
 import { Duplex } from 'stream';
 
@@ -101,4 +102,10 @@ export class MockCargoDeliveryCall extends MockGrpcBidiCall<
       this.output.push({ id: value.id });
     }
   }
+}
+
+export function* generateCargoRelays(
+  cargoRelays: readonly CargoDeliveryRequest[],
+): IterableIterator<CargoDeliveryRequest> {
+  yield* cargoRelays;
 }
