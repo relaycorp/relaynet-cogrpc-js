@@ -48,7 +48,7 @@ export class CogRPCClient {
     if (serverUrlParts.protocol !== 'https:') {
       throw new CogRPCError(`Cannot connect to ${serverUrlParts.hostname} without TLS`);
     }
-    const address = await resolveAddress(serverUrlParts);
+    const address = await resolveAddress(serverUrlParts.host);
     const credentials = await createTlsCredentials(address.host, address.port);
     return new CogRPCClient(`${address.host}:${address.port}`, credentials);
   }
@@ -164,13 +164,9 @@ export class CogRPCClient {
   }
 }
 
-async function resolveAddress(serverUrlParts: URL): Promise<PublicNodeAddress> {
-  if (serverUrlParts.port !== '') {
-    const port = parseInt(serverUrlParts.port, 10);
-    return { host: serverUrlParts.hostname, port };
-  }
-  const srvAddress = await resolvePublicAddress(serverUrlParts.hostname, BindingType.CRC);
-  return srvAddress ?? { host: serverUrlParts.hostname, port: DEFAULT_PORT };
+async function resolveAddress(hostName: string): Promise<PublicNodeAddress> {
+  const srvAddress = await resolvePublicAddress(hostName, BindingType.CRC);
+  return srvAddress ?? { host: hostName, port: DEFAULT_PORT };
 }
 
 async function createTlsCredentials(host: string, port: number): Promise<grpc.ChannelCredentials> {

@@ -79,7 +79,7 @@ describe('CogRPCClient', () => {
   describe('init', () => {
     const createSslSpy = mockSpy(jest.spyOn(grpc.credentials, 'createSsl'));
 
-    test('gRPC client should connect to target in SRV record if present', async () => {
+    test('gRPC client should connect to public address if resolved', async () => {
       await CogRPCClient.init(`https://${HOST}`);
 
       expect(grpcService.CargoRelayClient).toBeCalledTimes(1);
@@ -87,7 +87,7 @@ describe('CogRPCClient', () => {
       expect(clientInitializationArgs[0]).toEqual(`${TARGET_HOST}:${TARGET_PORT}`);
     });
 
-    test('gRPC client should connect to host on port 443 if SRV record is absent', async () => {
+    test('gRPC client should connect to host on port 443 if address is unresolved', async () => {
       mockResolvePublicAddress.mockResolvedValue(null);
 
       await CogRPCClient.init(`https://${HOST}`);
@@ -95,16 +95,6 @@ describe('CogRPCClient', () => {
       expect(grpcService.CargoRelayClient).toBeCalledTimes(1);
       const clientInitializationArgs = getMockContext(grpcService.CargoRelayClient).calls[0];
       expect(clientInitializationArgs[0]).toEqual(`${HOST}:443`);
-    });
-
-    test('gRPC client should connect to original netloc if port is present in URL', async () => {
-      const customPort = 9753;
-      await CogRPCClient.init(`https://${HOST}:${customPort}`);
-
-      expect(grpcService.CargoRelayClient).toBeCalledTimes(1);
-      const clientInitializationArgs = getMockContext(grpcService.CargoRelayClient).calls[0];
-      expect(clientInitializationArgs[0]).toEqual(`${HOST}:${customPort}`);
-      expect(mockResolvePublicAddress).not.toBeCalled();
     });
 
     test('TLS should be used', async () => {
@@ -140,6 +130,8 @@ describe('CogRPCClient', () => {
 
       describe('Private IP address as target host', () => {
         test('Any TLS certificate should be accepted', async () => {
+          mockResolvePublicAddress.mockResolvedValue({ host: PRIVATE_IP, port: PORT });
+
           await CogRPCClient.init(`https://${PRIVATE_IP}:${PORT}`);
 
           expect(tls.connect).toBeCalledWith(
@@ -156,14 +148,14 @@ describe('CogRPCClient', () => {
         });
 
         test('TLS socket should be closed immediately after use', async () => {
-          mockResolvePublicAddress.mockResolvedValue(null);
+          mockResolvePublicAddress.mockResolvedValue({ host: PRIVATE_IP, port: PORT });
 
           await CogRPCClient.init(`https://${PRIVATE_IP}`);
 
           expect(MOCK_TLS_SOCKET.end).toBeCalled();
         });
 
-        test('Port 443 should be used if no port is explicitly set', async () => {
+        test('Port 443 should be used if public address is not resolved', async () => {
           mockResolvePublicAddress.mockResolvedValue(null);
 
           await CogRPCClient.init(`https://${PRIVATE_IP}`);
