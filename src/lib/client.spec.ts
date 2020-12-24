@@ -5,13 +5,7 @@ import * as grpc from 'grpc';
 import * as jestDateMock from 'jest-date-mock';
 import * as tls from 'tls';
 
-import {
-  configureMockEnvVars,
-  getMockContext,
-  MockCargoDeliveryCall,
-  MockGrpcBidiCall,
-  mockSpy,
-} from './_test_utils';
+import { getMockContext, MockCargoDeliveryCall, MockGrpcBidiCall, mockSpy } from './_test_utils';
 import { CogRPCClient, CogRPCError } from './client';
 import * as grpcService from './grpcService';
 
@@ -64,9 +58,6 @@ const HTTPS_SERVER_URL = `https://${SERVER_HOST_NAME}`;
 describe('CogRPCClient', () => {
   describe('init', () => {
     const createSslSpy = mockSpy(jest.spyOn(grpc.credentials, 'createSsl'));
-    const createInsecureSpy = mockSpy(jest.spyOn(grpc.credentials, 'createInsecure'));
-
-    const mockEnvVars = configureMockEnvVars({});
 
     const HTTP_SERVER_URL = `http://${SERVER_HOST_NAME}`;
 
@@ -79,7 +70,7 @@ describe('CogRPCClient', () => {
       expect(clientInitializationArgs[0]).toEqual(`${SERVER_HOST_NAME}:${port}`);
     });
 
-    test('Server port should default to 443 when using TLS', async () => {
+    test('Server port should default to 443', async () => {
       await CogRPCClient.init(`https://${SERVER_HOST_NAME}`);
 
       expect(grpcService.CargoRelayClient).toBeCalledTimes(1);
@@ -96,39 +87,10 @@ describe('CogRPCClient', () => {
       expect(clientInitializationArgs[1]).toBe(credentials);
     });
 
-    test('TLS cannot be skipped if COGRPC_TLS_REQUIRED is unset', async () => {
+    test('Non-TLS connections must be refused', async () => {
       await expect(CogRPCClient.init(HTTP_SERVER_URL)).rejects.toEqual(
-        new CogRPCError(`Cannot connect to ${SERVER_HOST_NAME}:80 without TLS`),
+        new CogRPCError(`Cannot connect to ${SERVER_HOST_NAME} without TLS`),
       );
-    });
-
-    test('TLS cannot be skipped if COGRPC_TLS_REQUIRED is enabled', async () => {
-      mockEnvVars({ COGRPC_TLS_REQUIRED: 'true' });
-
-      await expect(CogRPCClient.init(HTTP_SERVER_URL)).rejects.toEqual(
-        new CogRPCError(`Cannot connect to ${SERVER_HOST_NAME}:80 without TLS`),
-      );
-    });
-
-    test('TLS can be skipped if COGRPC_TLS_REQUIRED is disabled', async () => {
-      mockEnvVars({ COGRPC_TLS_REQUIRED: 'false' });
-
-      await CogRPCClient.init(HTTP_SERVER_URL);
-
-      expect(createInsecureSpy).toBeCalledTimes(1);
-      const credentials = createInsecureSpy.mock.results[0].value;
-      const clientInitializationArgs = getMockContext(grpcService.CargoRelayClient).calls[0];
-      expect(clientInitializationArgs[1]).toBe(credentials);
-    });
-
-    test('Server port should default to 80 when not using TLS', async () => {
-      mockEnvVars({ COGRPC_TLS_REQUIRED: 'false' });
-
-      await CogRPCClient.init(`http://${SERVER_HOST_NAME}`);
-
-      expect(grpcService.CargoRelayClient).toBeCalledTimes(1);
-      const clientInitializationArgs = getMockContext(grpcService.CargoRelayClient).calls[0];
-      expect(clientInitializationArgs[0]).toEqual(`${SERVER_HOST_NAME}:80`);
     });
 
     describe('TLS server certificate validation', () => {
