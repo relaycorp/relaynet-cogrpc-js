@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>CogRPCClient | @relaycorp/cogrpc</title>
+	<title>@relaycorp/cogrpc | @relaycorp/cogrpc</title>
 	<meta name="description" content="Documentation for @relaycorp/cogrpc">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<style type="text/css">/*! normalize.css v1.1.3 | MIT License | git.io/normalize */
@@ -2646,7 +2646,7 @@ img {
 		<div class="container">
 			<div class="table-wrap">
 				<div class="table-cell">
-					<strong><a href="../index.html">@relaycorp/cogrpc</a></strong>
+					<strong><a href="index.html">@relaycorp/cogrpc</a></strong>
 				</div>
 				<div class="table-cell" id="tsd-widgets">
 					<div id="tsd-filter">
@@ -2676,190 +2676,152 @@ img {
 </header>
 <nav class="tsd-navigation secondary">
 	<ul>
-		<li class="current tsd-kind-class">
-			<a href="cogrpcclient.html" class="tsd-kind-icon">CogRPCClient</a>
-			<ul>
-				<li class=" tsd-kind-method tsd-parent-kind-class">
-					<a href="cogrpcclient.html#close" class="tsd-kind-icon">close</a>
-				</li>
-				<li class=" tsd-kind-method tsd-parent-kind-class">
-					<a href="cogrpcclient.html#collectcargo" class="tsd-kind-icon">collect<wbr>Cargo</a>
-				</li>
-				<li class=" tsd-kind-method tsd-parent-kind-class">
-					<a href="cogrpcclient.html#delivercargo" class="tsd-kind-icon">deliver<wbr>Cargo</a>
-				</li>
-				<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
-					<a href="cogrpcclient.html#init" class="tsd-kind-icon">init</a>
-				</li>
-			</ul>
+		<li class=" tsd-kind-class">
+			<a href="classes/cogrpcclient.html" class="tsd-kind-icon">CogRPCClient</a>
 		</li>
 		<li class=" tsd-kind-class">
-			<a href="cogrpcerror.html" class="tsd-kind-icon">CogRPCError</a>
+			<a href="classes/cogrpcerror.html" class="tsd-kind-icon">CogRPCError</a>
 		</li>
 		<li class=" tsd-kind-interface">
-			<a href="../interfaces/cargodelivery.html" class="tsd-kind-icon">Cargo<wbr>Delivery</a>
+			<a href="interfaces/cargodelivery.html" class="tsd-kind-icon">Cargo<wbr>Delivery</a>
 		</li>
 		<li class=" tsd-kind-interface">
-			<a href="../interfaces/cargodeliveryack.html" class="tsd-kind-icon">Cargo<wbr>Delivery<wbr>Ack</a>
+			<a href="interfaces/cargodeliveryack.html" class="tsd-kind-icon">Cargo<wbr>Delivery<wbr>Ack</a>
 		</li>
 		<li class=" tsd-kind-interface">
-			<a href="../interfaces/cargorelayservermethodset.html" class="tsd-kind-icon">Cargo<wbr>Relay<wbr>Server<wbr>Method<wbr>Set</a>
+			<a href="interfaces/cargorelayservermethodset.html" class="tsd-kind-icon">Cargo<wbr>Relay<wbr>Server<wbr>Method<wbr>Set</a>
 		</li>
 		<li class=" tsd-kind-variable">
-			<a href="../modules.html#cargorelayservice" class="tsd-kind-icon">Cargo<wbr>Relay<wbr>Service</a>
+			<a href="modules.html#cargorelayservice" class="tsd-kind-icon">Cargo<wbr>Relay<wbr>Service</a>
 		</li>
 	</ul>
 </nav>
 <div class="container container-main">
 	<div class="content-wrap">
-		<section class="tsd-panel tsd-comment">
-			<div class="tsd-comment tsd-typography">
-				<div class="lead">
-					<p>CogRPC client.</p>
-				</div>
-			</div>
-		</section>
-		<section class="tsd-panel tsd-hierarchy">
-			<h3>Hierarchy</h3>
-			<ul class="tsd-hierarchy">
-				<li>
-					<span class="target">CogRPCClient</span>
-				</li>
+		<div class="tsd-panel tsd-typography">
+			<a href="#cogrpc-implementation-in-javascript" id="cogrpc-implementation-in-javascript" style="color: inherit; text-decoration: none;">
+				<h1>CogRPC Implementation in JavaScript</h1>
+			</a>
+			<p>This library implements <a href="https://specs.relaynet.network/RS-008">CogRPC</a> in JavaScript with types included. It offers a CogRPC client and the building blocks to implement a CogRPC server. This documentation assumes familiarity with CogRPC.</p>
+			<a href="#install" id="install" style="color: inherit; text-decoration: none;">
+				<h2>Install</h2>
+			</a>
+			<p><code>@relaycorp/cogrpc</code> requires Node.js v10 or newer, and the latest stable release can be installed as follows:</p>
+			<pre><code class="language-shell"><span style="color: #000000">npm install @relaycorp/cogrpc</span>
+</code></pre>
+			<p>Development releases use the <code>dev</code> tag (<code>@relaycorp/cogrpc@dev</code>).</p>
+			<a href="#use" id="use" style="color: inherit; text-decoration: none;">
+				<h2>Use</h2>
+			</a>
+			<p>The next section explains how to use this library. You may also want to read the <a href="https://docs.relaycorp.tech/relaynet-cogrpc-js/">API documentation</a>.</p>
+			<a href="#as-a-client" id="as-a-client" style="color: inherit; text-decoration: none;">
+				<h3>As a client</h3>
+			</a>
+			<p>The first step to use the CogRPC client is to initialize it:</p>
+			<pre><code class="language-js"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">CogRPCClient</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@relaycorp/cogrpc&#039;</span><span style="color: #000000">;</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">SERVER_URL</span><span style="color: #000000"> = </span><span style="color: #A31515">&#039;https://192.168.43.1&#039;</span><span style="color: #000000">;</span>
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">CogRPCClient</span><span style="color: #000000">.</span><span style="color: #795E26">init</span><span style="color: #000000">(</span><span style="color: #0070C1">SERVER_URL</span><span style="color: #000000">);</span>
+</code></pre>
+			<p>You can start delivering and collecting cargo once the client is initialized -- Simply use the client methods <code>deliverCargo()</code> and <code>collectCargo()</code>, respectively.</p>
+			<p>For example, the following is an overly simplistic version of a courier synchronizing cargo with the public gateway at <code>https://gb.relaycorp.tech</code>:</p>
+			<pre><code class="language-typescript"><span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">CogRPCClient</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@relaycorp/cogrpc&#039;</span><span style="color: #000000">;</span>
+<span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">Cargo</span><span style="color: #000000">, </span><span style="color: #001080">CargoDeliveryRequest</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;@relaycorp/relaynet-core&#039;</span><span style="color: #000000">;</span>
+<span style="color: #AF00DB">import</span><span style="color: #000000"> { </span><span style="color: #001080">promises</span><span style="color: #000000"> </span><span style="color: #AF00DB">as</span><span style="color: #000000"> </span><span style="color: #001080">fs</span><span style="color: #000000"> } </span><span style="color: #AF00DB">from</span><span style="color: #000000"> </span><span style="color: #A31515">&#039;fs&#039;</span><span style="color: #000000">;</span>
+
+<span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">ROOT_DIR</span><span style="color: #000000"> = </span><span style="color: #A31515">&#039;/var/cargoes&#039;</span><span style="color: #000000">;</span>
+
+<span style="color: #0000FF">async</span><span style="color: #000000"> </span><span style="color: #0000FF">function</span><span style="color: #000000"> </span><span style="color: #795E26">main</span><span style="color: #000000">(): </span><span style="color: #267F99">Promise</span><span style="color: #000000">&lt;</span><span style="color: #267F99">void</span><span style="color: #000000">&gt; {</span>
+<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">gwAddress</span><span style="color: #000000"> = </span><span style="color: #A31515">&#039;https://gb.relaycorp.tech&#039;</span><span style="color: #000000">;</span>
+<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">client</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">CogRPCClient</span><span style="color: #000000">.</span><span style="color: #795E26">init</span><span style="color: #000000">(</span><span style="color: #001080">gwAddress</span><span style="color: #000000">);</span>
+
+<span style="color: #000000">  </span><span style="color: #008000">// Deliver cargo</span>
+<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">outgoingCargoes</span><span style="color: #000000"> = </span><span style="color: #795E26">retrieveOutgoingCargoes</span><span style="color: #000000">(</span><span style="color: #001080">gwAddress</span><span style="color: #000000">);</span>
+<span style="color: #000000">  </span><span style="color: #AF00DB">for</span><span style="color: #000000"> </span><span style="color: #AF00DB">await</span><span style="color: #000000"> (</span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">deliveredCargoPath</span><span style="color: #000000"> </span><span style="color: #0000FF">of</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">deliverCargo</span><span style="color: #000000">(</span><span style="color: #001080">outgoingCargoes</span><span style="color: #000000">)) {</span>
+<span style="color: #000000">    </span><span style="color: #008000">// Delete each cargo as soon as it&#039;s delivered</span>
+<span style="color: #000000">    </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">fs</span><span style="color: #000000">.</span><span style="color: #795E26">unlink</span><span style="color: #000000">(</span><span style="color: #001080">deliveredCargoPath</span><span style="color: #000000">);</span>
+<span style="color: #000000">  }</span>
+
+<span style="color: #000000">  </span><span style="color: #008000">// Collect cargo</span>
+<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">cca</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">fs</span><span style="color: #000000">.</span><span style="color: #795E26">readFile</span><span style="color: #000000">(</span><span style="color: #A31515">`</span><span style="color: #0000FF">${</span><span style="color: #0070C1">ROOT_DIR</span><span style="color: #0000FF">}</span><span style="color: #A31515">/ccas/</span><span style="color: #0000FF">${</span><span style="color: #001080">gwAddress</span><span style="color: #0000FF">}</span><span style="color: #A31515">`</span><span style="color: #000000">);</span>
+<span style="color: #000000">  </span><span style="color: #AF00DB">for</span><span style="color: #000000"> </span><span style="color: #AF00DB">await</span><span style="color: #000000"> (</span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">incomingCargo</span><span style="color: #000000"> </span><span style="color: #0000FF">of</span><span style="color: #000000"> </span><span style="color: #001080">client</span><span style="color: #000000">.</span><span style="color: #795E26">collectCargo</span><span style="color: #000000">(</span><span style="color: #001080">cca</span><span style="color: #000000">)) {</span>
+<span style="color: #000000">    </span><span style="color: #0000FF">let</span><span style="color: #000000"> </span><span style="color: #001080">cargo</span><span style="color: #000000">: </span><span style="color: #267F99">Cargo</span><span style="color: #000000">;</span>
+<span style="color: #000000">    </span><span style="color: #AF00DB">try</span><span style="color: #000000"> {</span>
+<span style="color: #000000">      </span><span style="color: #001080">cargo</span><span style="color: #000000"> = </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">Cargo</span><span style="color: #000000">.</span><span style="color: #795E26">deserialize</span><span style="color: #000000">(</span><span style="color: #001080">incomingCargo</span><span style="color: #000000">);</span>
+<span style="color: #000000">      </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">cargo</span><span style="color: #000000">.</span><span style="color: #795E26">validate</span><span style="color: #000000">();</span>
+<span style="color: #000000">    } </span><span style="color: #AF00DB">catch</span><span style="color: #000000"> (</span><span style="color: #001080">error</span><span style="color: #000000">) {</span>
+<span style="color: #000000">      </span><span style="color: #AF00DB">continue</span><span style="color: #000000">;</span>
+<span style="color: #000000">    }</span>
+<span style="color: #000000">    </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">path</span><span style="color: #000000"> = </span><span style="color: #A31515">`</span><span style="color: #0000FF">${</span><span style="color: #0070C1">ROOT_DIR</span><span style="color: #0000FF">}</span><span style="color: #A31515">/sneakernet-bound/</span><span style="color: #0000FF">${</span><span style="color: #001080">cargo</span><span style="color: #000000FF">.</span><span style="color: #001080">recipientAddress</span><span style="color: #0000FF">}</span><span style="color: #A31515">/</span><span style="color: #0000FF">${</span><span style="color: #001080">cargo</span><span style="color: #000000FF">.</span><span style="color: #001080">id</span><span style="color: #0000FF">}</span><span style="color: #A31515">`</span><span style="color: #000000">;</span>
+<span style="color: #000000">    </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">fs</span><span style="color: #000000">.</span><span style="color: #795E26">writeFile</span><span style="color: #000000">(</span><span style="color: #001080">path</span><span style="color: #000000">, </span><span style="color: #001080">incomingCargo</span><span style="color: #000000">);</span>
+<span style="color: #000000">  }</span>
+<span style="color: #000000">}</span>
+
+<span style="color: #0000FF">async</span><span style="color: #000000"> </span><span style="color: #0000FF">function*</span><span style="color: #000000"> </span><span style="color: #795E26">retrieveOutgoingCargoes</span><span style="color: #000000">(</span>
+<span style="color: #000000">  </span><span style="color: #001080">publicGatewayAddress</span><span style="color: #000000">: </span><span style="color: #267F99">string</span><span style="color: #000000">,</span>
+<span style="color: #000000">): </span><span style="color: #267F99">AsyncIterable</span><span style="color: #000000">&lt;</span><span style="color: #267F99">CargoDeliveryRequest</span><span style="color: #000000">&gt; {</span>
+<span style="color: #000000">  </span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">dir</span><span style="color: #000000"> = </span><span style="color: #A31515">`</span><span style="color: #0000FF">${</span><span style="color: #0070C1">ROOT_DIR</span><span style="color: #0000FF">}</span><span style="color: #A31515">/internet-bound/</span><span style="color: #0000FF">${</span><span style="color: #001080">publicGatewayAddress</span><span style="color: #0000FF">}</span><span style="color: #A31515">`</span><span style="color: #000000">;</span>
+<span style="color: #000000">  </span><span style="color: #AF00DB">for</span><span style="color: #000000"> </span><span style="color: #AF00DB">await</span><span style="color: #000000"> (</span><span style="color: #0000FF">const</span><span style="color: #000000"> </span><span style="color: #0070C1">cargoPath</span><span style="color: #000000"> </span><span style="color: #0000FF">of</span><span style="color: #000000"> </span><span style="color: #001080">fs</span><span style="color: #000000">.</span><span style="color: #795E26">readdir</span><span style="color: #000000">(</span><span style="color: #001080">dir</span><span style="color: #000000">)) {</span>
+<span style="color: #000000">    </span><span style="color: #AF00DB">yield</span><span style="color: #000000"> { </span><span style="color: #001080">cargo:</span><span style="color: #000000"> </span><span style="color: #AF00DB">await</span><span style="color: #000000"> </span><span style="color: #001080">fs</span><span style="color: #000000">.</span><span style="color: #795E26">readFile</span><span style="color: #000000">(</span><span style="color: #001080">cargoPath</span><span style="color: #000000">), </span><span style="color: #001080">localId:</span><span style="color: #000000"> </span><span style="color: #001080">cargoPath</span><span style="color: #000000"> };</span>
+<span style="color: #000000">  }</span>
+<span style="color: #000000">}</span>
+</code></pre>
+			<a href="#in-a-server" id="in-a-server" style="color: inherit; text-decoration: none;">
+				<h3>In a server</h3>
+			</a>
+			<p>If you&#39;re writing a CogRPC server in a courier or a public gateway, you may want to use the following values exported by this library:</p>
+			<ul>
+				<li><code>CargoRelayService</code>, which is the ProtoBuf representation of the service.</li>
+				<li><code>CargoDelivery</code> and <code>CargoDeliveryAck</code>, the interfaces for the data exchanged over gRPC.</li>
 			</ul>
-		</section>
+			<a href="#support" id="support" style="color: inherit; text-decoration: none;">
+				<h2>Support</h2>
+			</a>
+			<p>If you have any questions or comments, please <a href="https://github.com/relaycorp/relaynet-cogrpc-js/issues/new/choose">create an issue on GitHub</a>.</p>
+			<a href="#updates" id="updates" style="color: inherit; text-decoration: none;">
+				<h2>Updates</h2>
+			</a>
+			<p>Releases are automatically published on GitHub and NPM, and the <a href="https://github.com/relaycorp/relaynet-cogrpc-js/releases">changelog can be found on GitHub</a>. This project uses <a href="https://semver.org/">semantic versioning</a>.</p>
+		</div>
 		<section class="tsd-panel-group tsd-index-group">
 			<h2>Index</h2>
 			<section class="tsd-panel tsd-index-panel">
 				<div class="tsd-index-content">
 					<section class="tsd-index-section ">
-						<h3>Methods</h3>
+						<h3>Classes</h3>
 						<ul class="tsd-index-list">
-							<li class="tsd-kind-method tsd-parent-kind-class"><a href="cogrpcclient.html#close" class="tsd-kind-icon">close</a></li>
-							<li class="tsd-kind-method tsd-parent-kind-class"><a href="cogrpcclient.html#collectcargo" class="tsd-kind-icon">collect<wbr>Cargo</a></li>
-							<li class="tsd-kind-method tsd-parent-kind-class"><a href="cogrpcclient.html#delivercargo" class="tsd-kind-icon">deliver<wbr>Cargo</a></li>
-							<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="cogrpcclient.html#init" class="tsd-kind-icon">init</a></li>
+							<li class="tsd-kind-class"><a href="classes/cogrpcclient.html" class="tsd-kind-icon">CogRPCClient</a></li>
+							<li class="tsd-kind-class"><a href="classes/cogrpcerror.html" class="tsd-kind-icon">CogRPCError</a></li>
+						</ul>
+					</section>
+					<section class="tsd-index-section ">
+						<h3>Interfaces</h3>
+						<ul class="tsd-index-list">
+							<li class="tsd-kind-interface"><a href="interfaces/cargodelivery.html" class="tsd-kind-icon">Cargo<wbr>Delivery</a></li>
+							<li class="tsd-kind-interface"><a href="interfaces/cargodeliveryack.html" class="tsd-kind-icon">Cargo<wbr>Delivery<wbr>Ack</a></li>
+							<li class="tsd-kind-interface"><a href="interfaces/cargorelayservermethodset.html" class="tsd-kind-icon">Cargo<wbr>Relay<wbr>Server<wbr>Method<wbr>Set</a></li>
+						</ul>
+					</section>
+					<section class="tsd-index-section ">
+						<h3>Variables</h3>
+						<ul class="tsd-index-list">
+							<li class="tsd-kind-variable"><a href="modules.html#cargorelayservice" class="tsd-kind-icon">Cargo<wbr>Relay<wbr>Service</a></li>
 						</ul>
 					</section>
 				</div>
 			</section>
 		</section>
 		<section class="tsd-panel-group tsd-member-group ">
-			<h2>Methods</h2>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-				<a name="close" class="tsd-anchor"></a>
-				<h3>close</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">close<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/6511c88/src/lib/client.ts#L67">src/lib/client.ts:67</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Close the underlying gRPC connection.</p>
-							</div>
-						</div>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
-					</li>
-				</ul>
-			</section>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-				<a name="collectcargo" class="tsd-anchor"></a>
-				<h3>collect<wbr>Cargo</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">collect<wbr>Cargo<span class="tsd-signature-symbol">(</span>ccaSerialized<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">AsyncIterable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">&gt;</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/6511c88/src/lib/client.ts#L143">src/lib/client.ts:143</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Collect cargo for a given CCA from the current server.</p>
-							</div>
-						</div>
-						<h4 class="tsd-parameters-title">Parameters</h4>
-						<ul class="tsd-parameters">
-							<li>
-								<h5>ccaSerialized: <span class="tsd-signature-type">Buffer</span></h5>
-								<div class="tsd-comment tsd-typography">
-								</div>
-							</li>
-						</ul>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">AsyncIterable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">&gt;</span></h4>
-					</li>
-				</ul>
-			</section>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-				<a name="delivercargo" class="tsd-anchor"></a>
-				<h3>deliver<wbr>Cargo</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-					<li class="tsd-signature tsd-kind-icon">deliver<wbr>Cargo<span class="tsd-signature-symbol">(</span>cargoRelay<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">IterableIterator</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">CargoDeliveryRequest</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">AsyncIterable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/6511c88/src/lib/client.ts#L76">src/lib/client.ts:76</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Deliver the specified cargo to the current server.</p>
-							</div>
-						</div>
-						<h4 class="tsd-parameters-title">Parameters</h4>
-						<ul class="tsd-parameters">
-							<li>
-								<h5>cargoRelay: <span class="tsd-signature-type">IterableIterator</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">CargoDeliveryRequest</span><span class="tsd-signature-symbol">&gt;</span></h5>
-								<div class="tsd-comment tsd-typography">
-								</div>
-							</li>
-						</ul>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">AsyncIterable</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4>
-					</li>
-				</ul>
-			</section>
-			<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
-				<a name="init" class="tsd-anchor"></a>
-				<h3><span class="tsd-flag ts-flagStatic">Static</span> init</h3>
-				<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
-					<li class="tsd-signature tsd-kind-icon">init<span class="tsd-signature-symbol">(</span>serverUrl<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="cogrpcclient.html" class="tsd-signature-type" data-tsd-kind="Class">CogRPCClient</a><span class="tsd-signature-symbol">&gt;</span></li>
-				</ul>
-				<ul class="tsd-descriptions">
-					<li class="tsd-description">
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/6511c88/src/lib/client.ts#L46">src/lib/client.ts:46</a></li>
-							</ul>
-						</aside>
-						<div class="tsd-comment tsd-typography">
-							<div class="lead">
-								<p>Initialize a CogRPC client.</p>
-							</div>
-							<p>If the host name in <code>serverUrl</code> is a private IPv4/IPv6 address, self-issued certificates will
-							be accepted. Under no other circumstances will self-issued certificates be accepted.</p>
-							<p>TLS is always required.</p>
-						</div>
-						<h4 class="tsd-parameters-title">Parameters</h4>
-						<ul class="tsd-parameters">
-							<li>
-								<h5>serverUrl: <span class="tsd-signature-type">string</span></h5>
-								<div class="tsd-comment tsd-typography">
-									<p>URL to the gRPC server</p>
-								</div>
-							</li>
-						</ul>
-						<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="cogrpcclient.html" class="tsd-signature-type" data-tsd-kind="Class">CogRPCClient</a><span class="tsd-signature-symbol">&gt;</span></h4>
-					</li>
-				</ul>
+			<h2>Variables</h2>
+			<section class="tsd-panel tsd-member tsd-kind-variable">
+				<a name="cargorelayservice" class="tsd-anchor"></a>
+				<h3><span class="tsd-flag ts-flagConst">Const</span> Cargo<wbr>Relay<wbr>Service</h3>
+				<div class="tsd-signature tsd-kind-icon">Cargo<wbr>Relay<wbr>Service<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ServiceDefinition</span><span class="tsd-signature-symbol">&lt;</span><a href="interfaces/cargorelayservermethodset.html" class="tsd-signature-type" data-tsd-kind="Interface">CargoRelayServerMethodSet</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></div>
+				<aside class="tsd-sources">
+					<ul>
+						<li>Defined in <a href="https://github.com/relaycorp/relaynet-cogrpc-js/blob/6511c88/src/lib/grpcService.ts#L52">src/lib/grpcService.ts:52</a></li>
+					</ul>
+				</aside>
 			</section>
 		</section>
 		<footer class="with-border-bottom">
