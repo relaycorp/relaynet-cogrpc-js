@@ -187,12 +187,14 @@ async function createTlsCredentials(host: string, port: number): Promise<grpc.Ch
 }
 
 async function retrieveCertificateDer(host: string, port: number): Promise<Buffer> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const tlsSocket = tls.connect({ host, port, rejectUnauthorized: false }, () => {
       const certificateDer: Buffer = tlsSocket.getPeerCertificate().raw;
       tlsSocket.end();
       return resolve(certificateDer);
     });
+    tlsSocket.setTimeout(2_000);
+    tlsSocket.on('error', reject);
   });
 }
 

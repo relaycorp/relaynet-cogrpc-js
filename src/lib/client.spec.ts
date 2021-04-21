@@ -1,6 +1,7 @@
 // tslint:disable:no-object-mutation
 
 import * as relaynet from '@relaycorp/relaynet-core';
+import { EventEmitter } from 'events';
 import * as grpc from 'grpc';
 import * as jestDateMock from 'jest-date-mock';
 import * as tls from 'tls';
@@ -117,14 +118,12 @@ describe('CogRPCClient', () => {
       const PORT = 1234;
 
       const DUMMY_CERTIFICATE_DER = Buffer.from('Pretend this is a DER-encoded X.509 cert');
-      const MOCK_TLS_SOCKET = {
-        end: mockSpy(jest.fn()),
-        getPeerCertificate: mockSpy(jest.fn(), () => ({ raw: DUMMY_CERTIFICATE_DER })),
-      };
+      let mockTLSSocket: MockTLSSocket;
       beforeEach(() => {
+        mockTLSSocket = new MockTLSSocket(DUMMY_CERTIFICATE_DER);
         ((tls.connect as any) as jest.MockInstance<any, any>).mockImplementation((_, cb) => {
           setImmediate(cb);
-          return MOCK_TLS_SOCKET;
+          return mockTLSSocket;
         });
       });
 
@@ -152,7 +151,28 @@ describe('CogRPCClient', () => {
 
           await CogRPCClient.init(`https://${PRIVATE_IP}`);
 
-          expect(MOCK_TLS_SOCKET.end).toBeCalled();
+          expect(mockTLSSocket.end).toBeCalled();
+        });
+
+        test('TLS socket should timeout after 2 seconds', async () => {
+          mockResolvePublicAddress.mockResolvedValue({ host: PRIVATE_IP, port: PORT });
+
+          await CogRPCClient.init(`https://${PRIVATE_IP}`);
+
+          expect(mockTLSSocket.setTimeout).toBeCalledWith(2_000);
+        });
+
+        test('TLS connection errors should be thrown', async () => {
+          const error = new Error('Failed to connected');
+          ((tls.connect as any) as jest.MockInstance<any, any>).mockImplementation(() => {
+            return mockTLSSocket;
+          });
+          setImmediate(() => {
+            mockTLSSocket.emit('error', error);
+          });
+          mockResolvePublicAddress.mockResolvedValue({ host: PRIVATE_IP, port: PORT });
+
+          await expect(CogRPCClient.init(`https://${PRIVATE_IP}`)).rejects.toEqual(error);
         });
 
         test('Port 443 should be used if public address is not resolved', async () => {
@@ -476,4 +496,16 @@ async function consumeAsyncIterable<V>(iter: AsyncIterable<V>): Promise<readonly
 function pemCertificateToDer(pemBuffer: Buffer): Buffer {
   const content = pemBuffer.toString().replace(/(-----(BEGIN|END) (CERTIFICATE)-----|\n)/g, '');
   return Buffer.from(content, 'base64');
+}
+
+class MockTLSSocket extends EventEmitter {
+  public readonly end = jest.fn();
+  public readonly setTimeout = jest.fn();
+  public readonly getPeerCertificate: jest.Mock;
+
+  constructor(serverCertificateDer: Buffer) {
+    super();
+
+    this.getPeerCertificate = jest.fn().mockReturnValue({ raw: serverCertificateDer });
+  }
 }
