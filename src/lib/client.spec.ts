@@ -121,7 +121,7 @@ describe('CogRPCClient', () => {
       let mockTLSSocket: MockTLSSocket;
       beforeEach(() => {
         mockTLSSocket = new MockTLSSocket(DUMMY_CERTIFICATE_DER);
-        ((tls.connect as any) as jest.MockInstance<any, any>).mockImplementation((_, cb) => {
+        (tls.connect as any as jest.MockInstance<any, any>).mockImplementation((_, cb) => {
           setImmediate(cb);
           return mockTLSSocket;
         });
@@ -164,7 +164,7 @@ describe('CogRPCClient', () => {
 
         test('TLS connection errors should be thrown', async () => {
           const error = new Error('Failed to connected');
-          ((tls.connect as any) as jest.MockInstance<any, any>).mockImplementation(() => {
+          (tls.connect as any as jest.MockInstance<any, any>).mockImplementation(() => {
             return mockTLSSocket;
           });
           setImmediate(() => {
@@ -339,7 +339,7 @@ describe('CogRPCClient', () => {
 
       const localId = 'original-id';
 
-      function* generateRelays(): IterableIterator<relaynet.CargoDeliveryRequest> {
+      async function* generateRelays(): AsyncIterable<relaynet.CargoDeliveryRequest> {
         yield { localId, cargo: Buffer.from('foo') };
         mockCargoDeliveryCall.emit('end');
         yield { localId: 'should not be sent', cargo: Buffer.from('bar') };
