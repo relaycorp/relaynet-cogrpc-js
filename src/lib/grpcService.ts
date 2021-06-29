@@ -49,6 +49,7 @@ export interface CargoRelayServerMethodSet {
 
 // @ts-ignore
 // tslint:disable-next-line:variable-name
-export const CargoRelayService = CargoRelayClient.service as ServiceDefinition<CargoRelayServerMethodSet>;
+export const CargoRelayService = (CargoRelayClient as any)
+  .service as ServiceDefinition<CargoRelayServerMethodSet>;
 
 //endregion
