@@ -64,7 +64,7 @@
     "ts-node": "^10.0.0",
     "tslint": "^5.18.0",
     "typedoc": "^0.20.37",
-    "typescript": "^3.9.9"
+    "typescript": "^3.9.10"
   },
   "dependencies": {
     "@grpc/proto-loader": "^0.6.0",
