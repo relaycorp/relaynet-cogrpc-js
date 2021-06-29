@@ -74,14 +74,13 @@ export class CogRPCClient {
    * @param cargoRelay
    */
   public async *deliverCargo(
-    cargoRelay: IterableIterator<CargoDeliveryRequest>,
+    cargoRelay: AsyncIterable<CargoDeliveryRequest>,
   ): AsyncIterable<string> {
     // tslint:disable-next-line:readonly-keyword
     const pendingAckIds: { [key: string]: string } = {};
-    const call = ((this.grpcClient as unknown) as CargoRelayClientMethodSet).deliverCargo(
-      undefined,
-      { deadline: makeDeadline() },
-    );
+    const call = (this.grpcClient as unknown as CargoRelayClientMethodSet).deliverCargo(undefined, {
+      deadline: makeDeadline(),
+    });
 
     // tslint:disable-next-line:no-let
     let hasCallEnded = false;
@@ -90,7 +89,7 @@ export class CogRPCClient {
     async function* deliverCargo(
       source: AsyncIterable<CargoDeliveryAck>,
     ): AsyncIterable<CargoDeliveryAck> {
-      for (const relay of cargoRelay) {
+      for await (const relay of cargoRelay) {
         if (hasCallEnded) {
           break;
         }
@@ -143,10 +142,9 @@ export class CogRPCClient {
   public async *collectCargo(ccaSerialized: Buffer): AsyncIterable<Buffer> {
     const metadata = new grpc.Metadata();
     metadata.add('Authorization', `Relaynet-CCA ${ccaSerialized.toString('base64')}`);
-    const call = ((this.grpcClient as unknown) as CargoRelayClientMethodSet).collectCargo(
-      metadata,
-      { deadline: makeDeadline() },
-    );
+    const call = (this.grpcClient as unknown as CargoRelayClientMethodSet).collectCargo(metadata, {
+      deadline: makeDeadline(),
+    });
 
     async function* processCargo(source: AsyncIterable<CargoDelivery>): AsyncIterable<Buffer> {
       for await (const delivery of source) {
