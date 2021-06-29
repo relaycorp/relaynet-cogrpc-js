@@ -8,13 +8,3 @@ updates:
     timezone: Etc/UCT
   open-pull-requests-limit: 99
   versioning-strategy: increase
-  ignore:
-  - dependency-name: "@relaycorp/relaynet-core"
-    versions:
-    - 1.42.10
-  - dependency-name: typedoc
-    versions:
-    - 0.20.25
-    - 0.20.27
-    - 0.20.30
-    - 0.20.34
