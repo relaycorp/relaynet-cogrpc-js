@@ -74,7 +74,7 @@ export class CogRPCClient {
    * @param cargoRelay
    */
   public async *deliverCargo(
-    cargoRelay: IterableIterator<CargoDeliveryRequest>,
+    cargoRelay: AsyncIterable<CargoDeliveryRequest>,
   ): AsyncIterable<string> {
     // tslint:disable-next-line:readonly-keyword
     const pendingAckIds: { [key: string]: string } = {};
@@ -90,7 +90,7 @@ export class CogRPCClient {
     async function* deliverCargo(
       source: AsyncIterable<CargoDeliveryAck>,
     ): AsyncIterable<CargoDeliveryAck> {
-      for (const relay of cargoRelay) {
+      for await (const relay of cargoRelay) {
         if (hasCallEnded) {
           break;
         }

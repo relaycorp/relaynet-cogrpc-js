@@ -339,7 +339,7 @@ describe('CogRPCClient', () => {
 
       const localId = 'original-id';
 
-      function* generateRelays(): IterableIterator<relaynet.CargoDeliveryRequest> {
+      async function* generateRelays(): AsyncIterable<relaynet.CargoDeliveryRequest> {
         yield { localId, cargo: Buffer.from('foo') };
         mockCargoDeliveryCall.emit('end');
         yield { localId: 'should not be sent', cargo: Buffer.from('bar') };
