@@ -104,8 +104,10 @@ export class MockCargoDeliveryCall extends MockGrpcBidiCall<
   }
 }
 
-export function* generateCargoRelays(
+export async function* generateCargoRelays(
   cargoRelays: readonly CargoDeliveryRequest[],
-): IterableIterator<CargoDeliveryRequest> {
-  yield* cargoRelays;
+): AsyncIterable<CargoDeliveryRequest> {
+  for (const relay of cargoRelays) {
+    yield relay;
+  }
 }
