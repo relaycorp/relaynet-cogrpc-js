@@ -259,6 +259,15 @@ describe('CogRPCClient', () => {
       expect(mockGrcpClient.deliverCargo.mock.calls[0][1]).toEqual({ deadline: expectedDeadline });
     });
 
+    test('No cargo should be delivered if input iterator is empty', async () => {
+      const client = await CogRPCClient.init(URL);
+      mockCargoDeliveryCall.automaticallyEndReadStream = false;
+
+      await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([])));
+
+      expect(mockCargoDeliveryCall.input).toEqual([]);
+    });
+
     test('Each cargo from input iterator should be delivered', async () => {
       const client = await CogRPCClient.init(URL);
 
