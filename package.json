@@ -40,7 +40,7 @@
     "url": "https://github.com/relaycorp/relaynet-cogrpc-js/issues"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=12"
   },
   "homepage": "https://docs.relaycorp.tech/relaynet-gogrpc-js/",
   "prettier": "@relaycorp/shared-config/.prettierrc.json",
