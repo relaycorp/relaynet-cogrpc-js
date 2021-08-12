@@ -77,6 +77,6 @@
   },
   "peerDependencies": {
     "@relaycorp/relaynet-core": ">= 1.42.0 < 2",
-    "grpc": "< 2"
+    "@grpc/grpc-js": "< 2"
   }
 }
