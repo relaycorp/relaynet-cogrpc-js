@@ -1,7 +1,7 @@
 // tslint:disable:readonly-keyword max-classes-per-file
 
+import grpc from '@grpc/grpc-js';
 import { CargoDeliveryRequest } from '@relaycorp/relaynet-core';
-import grpc from 'grpc';
 import { Duplex } from 'stream';
 
 import * as grpcService from './grpcService';

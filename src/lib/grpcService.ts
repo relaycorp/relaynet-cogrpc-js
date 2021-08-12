@@ -1,4 +1,3 @@
-import { loadSync } from '@grpc/proto-loader';
 import {
   CallOptions,
   Client,
@@ -8,7 +7,8 @@ import {
   Metadata,
   ServerDuplexStream,
   ServiceDefinition,
-} from 'grpc';
+} from '@grpc/grpc-js';
+import { loadSync } from '@grpc/proto-loader';
 
 const cogrpcPackageDefinition = loadSync(__dirname + '/cogrpc.proto', { keepCase: true });
 const grpcPackage: GrpcObject = loadPackageDefinition(cogrpcPackageDefinition);
