@@ -261,7 +261,6 @@ describe('CogRPCClient', () => {
 
     test('No cargo should be delivered if input iterator is empty', async () => {
       const client = await CogRPCClient.init(URL);
-      mockCargoDeliveryCall.automaticallyEndReadStream = false;
 
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([])));
 
@@ -321,7 +320,6 @@ describe('CogRPCClient', () => {
 
     test('Connection should be ended when all relays have been acknowledged', async () => {
       const client = await CogRPCClient.init(URL);
-      mockCargoDeliveryCall.automaticallyEndReadStream = false;
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay])));
@@ -345,12 +343,14 @@ describe('CogRPCClient', () => {
 
     test('Call should be ended when the server ends it while delivering cargo', async () => {
       const client = await CogRPCClient.init(URL);
-
       const localId = 'original-id';
 
       async function* generateRelays(): AsyncIterable<relaynet.CargoDeliveryRequest> {
         yield { localId, cargo: Buffer.from('foo') };
+
+        await new Promise(setImmediate);
         mockCargoDeliveryCall.emit('end');
+
         yield { localId: 'should not be sent', cargo: Buffer.from('bar') };
       }
 

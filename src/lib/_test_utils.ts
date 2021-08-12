@@ -1,4 +1,4 @@
-/* tslint:disable:readonly-keyword max-classes-per-file */
+// tslint:disable:readonly-keyword max-classes-per-file
 
 import { CargoDeliveryRequest } from '@relaycorp/relaynet-core';
 import grpc from 'grpc';
@@ -38,9 +38,9 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
 
   public metadata?: grpc.Metadata;
 
-  public automaticallyEndReadStream = true;
-
   public readError?: Error;
+
+  protected automaticallyEndReadStream = true;
 
   private readPosition = 0;
 
@@ -92,15 +92,24 @@ export class MockCargoDeliveryCall extends MockGrpcBidiCall<
 > {
   public maxAcks?: number;
 
+  protected automaticallyEndReadStream = false;
+
+  protected acksSent = 0;
+
   public _write(
     value: grpcService.CargoDelivery,
-    _encoding: string,
+    encoding: string,
     callback: (error?: Error) => void,
   ): void {
-    super._write(value, _encoding, callback);
-    if (this.maxAcks === undefined || this.output.length < this.maxAcks) {
-      this.output.push({ id: value.id });
-    }
+    super._write(value, encoding, () => {
+      callback();
+
+      if (this.maxAcks === undefined || this.acksSent < this.maxAcks) {
+        const ack = { id: value.id };
+        this.push(ack);
+        this.acksSent++;
+      }
+    });
   }
 }
 

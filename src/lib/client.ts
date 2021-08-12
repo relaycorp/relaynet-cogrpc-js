@@ -10,6 +10,7 @@ import {
 import checkIp from 'check-ip';
 import * as grpc from 'grpc';
 import pipe from 'it-pipe';
+import { PassThrough } from 'stream';
 import * as toIterable from 'stream-to-it';
 import * as tls from 'tls';
 import uuid from 'uuid-random';
@@ -82,24 +83,21 @@ export class CogRPCClient {
       deadline: makeDeadline(),
     });
 
-    // tslint:disable-next-line:no-let
+    // TODO: Not needed anymore
     let hasCallEnded = false;
     call.on('end', () => (hasCallEnded = true));
 
-    async function* deliverCargo(
-      source: AsyncIterable<CargoDeliveryAck>,
-    ): AsyncIterable<CargoDeliveryAck> {
+    async function* deliverCargo(): AsyncIterable<CargoDelivery> {
       for await (const relay of cargoRelay) {
         if (hasCallEnded) {
           break;
         }
         const deliveryId = uuid();
         const delivery: CargoDelivery = { id: deliveryId, cargo: relay.cargo };
-        call.write(delivery);
+        yield delivery;
         // tslint:disable-next-line:no-object-mutation
         pendingAckIds[deliveryId] = relay.localId;
       }
-      yield* source;
     }
 
     async function* collectAcknowledgments(
@@ -123,13 +121,29 @@ export class CogRPCClient {
       }
     }
 
+    let anyCargoSent = false;
+    const sink = new PassThrough({ objectMode: true });
+    sink.on('data', (data) => {
+      anyCargoSent = true;
+      call.write(data);
+    });
+    sink.once('end', () => {
+      if (!anyCargoSent) {
+        call.end();
+      }
+    });
     try {
-      yield* await pipe(toIterable.source(call), deliverCargo, collectAcknowledgments);
+      yield* await pipe(
+        deliverCargo,
+        { sink: toIterable.sink(sink), source: toIterable.source(call) },
+        collectAcknowledgments,
+      );
     } catch (error) {
       throw error instanceof CogRPCError
         ? error
         : new CogRPCError(error, 'Unexpected error while delivering cargo');
     } finally {
+      sink.destroy();
       call.end();
     }
   }
