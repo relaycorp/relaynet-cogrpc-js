@@ -1,5 +1,6 @@
 /* tslint:disable:max-classes-per-file */
 
+import * as grpc from '@grpc/grpc-js';
 import {
   BindingType,
   CargoDeliveryRequest,
@@ -8,7 +9,6 @@ import {
   resolvePublicAddress,
 } from '@relaycorp/relaynet-core';
 import checkIp from 'check-ip';
-import * as grpc from 'grpc';
 import pipe from 'it-pipe';
 import { PassThrough } from 'stream';
 import * as toIterable from 'stream-to-it';

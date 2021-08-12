@@ -1,8 +1,8 @@
 // tslint:disable:no-object-mutation
 
+import * as grpc from '@grpc/grpc-js';
 import * as relaynet from '@relaycorp/relaynet-core';
 import { EventEmitter } from 'events';
-import * as grpc from 'grpc';
 import * as jestDateMock from 'jest-date-mock';
 import * as tls from 'tls';
 
@@ -45,13 +45,15 @@ beforeEach(() => {
     deliverCargo: jest.fn().mockReturnValueOnce(mockCargoDeliveryCall),
   };
 });
-jest.mock('grpc', () => {
-  const actualGrpc = jest.requireActual('grpc');
+jest.mock('@grpc/grpc-js', () => {
+  const actualGrpc = jest.requireActual('@grpc/grpc-js');
   return {
     ...actualGrpc,
     loadPackageDefinition(): grpc.GrpcObject {
       return {
-        relaynet: { cogrpc: { CargoRelay: jest.fn().mockImplementation(() => mockGrcpClient) } },
+        relaynet: {
+          cogrpc: { CargoRelay: jest.fn().mockImplementation(() => mockGrcpClient) as any },
+        },
       };
     },
   };

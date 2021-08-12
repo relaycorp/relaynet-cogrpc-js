@@ -1,5 +1,3 @@
-// import * as grpc from 'grpc';
-
 import { CargoRelayClient } from './grpcService';
 
 test('gRPC service should be computed and output', () => {
