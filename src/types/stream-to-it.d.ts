@@ -1,5 +1,5 @@
 declare module 'stream-to-it' {
-  import { Readable } from 'stream';
+  import { Writable } from 'stream';
 
-  export function source(source: Readable): IterableIterator<any>;
+  export function sink(sink: Writable): () => void;
 }

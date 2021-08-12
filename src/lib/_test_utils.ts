@@ -1,4 +1,4 @@
-/* tslint:disable:readonly-keyword max-classes-per-file */
+// tslint:disable:readonly-keyword max-classes-per-file
 
 import { CargoDeliveryRequest } from '@relaycorp/relaynet-core';
 import grpc from 'grpc';
@@ -38,27 +38,22 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
 
   public metadata?: grpc.Metadata;
 
-  public automaticallyEndReadStream = true;
-
   public readError?: Error;
+
+  protected automaticallyEndReadStream = true;
 
   private readPosition = 0;
 
   constructor() {
     super({ objectMode: true });
 
-    // Mimic what the gRPC client would do
-    this.on('error', () => this.end());
-
     jest.spyOn(this, 'emit' as any);
-    jest.spyOn(this, 'on' as any);
-    jest.spyOn(this, 'end' as any);
-    jest.spyOn(this, 'write' as any);
   }
 
   public _read(_size: number): void {
     if (this.readError) {
-      throw this.readError;
+      this.destroy(this.readError);
+      return;
     }
 
     while (this.output.length !== 0 && this.readPosition < this.output.length) {
@@ -92,15 +87,31 @@ export class MockCargoDeliveryCall extends MockGrpcBidiCall<
 > {
   public maxAcks?: number;
 
+  protected automaticallyEndReadStream = false;
+
+  protected acksSent = 0;
+
   public _write(
     value: grpcService.CargoDelivery,
-    _encoding: string,
+    encoding: string,
     callback: (error?: Error) => void,
   ): void {
-    super._write(value, _encoding, callback);
-    if (this.maxAcks === undefined || this.output.length < this.maxAcks) {
-      this.output.push({ id: value.id });
-    }
+    super._write(value, encoding, () => {
+      callback();
+
+      if (this.maxAcks === undefined || this.acksSent < this.maxAcks) {
+        const ack = { id: value.id };
+        this.push(ack);
+        this.acksSent++;
+      }
+
+      if (this.maxAcks === this.acksSent) {
+        // Destroy the stream after the last ACK has been processed
+        setImmediate(() => {
+          this.destroy();
+        });
+      }
+    });
   }
 }
 
