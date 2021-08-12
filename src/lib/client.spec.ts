@@ -315,7 +315,7 @@ describe('CogRPCClient', () => {
         new CogRPCError(`Received unknown acknowledgment "${invalidAckId}" from the server`),
       );
 
-      expect(mockCargoDeliveryCall.end).toBeCalledTimes(1);
+      expect(mockCargoDeliveryCall.destroyed).toBeTrue();
     });
 
     test('Connection should be ended when all relays have been acknowledged', async () => {
@@ -324,21 +324,18 @@ describe('CogRPCClient', () => {
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay])));
 
-      expect(mockCargoDeliveryCall.end).toBeCalledTimes(1);
+      expect(mockCargoDeliveryCall.destroyed).toBeTrue();
     });
 
     test('Stream errors should be thrown', async () => {
       const client = await CogRPCClient.init(URL);
       mockCargoDeliveryCall.readError = new Error('Random error found');
 
-      const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       await expect(
-        consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay]))),
+        consumeAsyncIterable(client.deliverCargo(generateCargoRelays([]))),
       ).rejects.toEqual(
         new CogRPCError(mockCargoDeliveryCall.readError, 'Unexpected error while delivering cargo'),
       );
-
-      expect(mockCargoDeliveryCall.end).toBeCalledTimes(1);
     });
 
     test('Call should be ended when the server ends it while delivering cargo', async () => {
@@ -363,7 +360,7 @@ describe('CogRPCClient', () => {
 
       expect(iterationCount).toEqual(1);
 
-      expect(mockCargoDeliveryCall.end).toBeCalledTimes(1);
+      expect(mockCargoDeliveryCall.destroyed).toBeTrue();
     });
 
     test('Error should be thrown when connection ends with outstanding acknowledgments', async () => {
@@ -391,8 +388,6 @@ describe('CogRPCClient', () => {
       expect(acks).toEqual([acknowledgedDelivery.localId]);
 
       expect(error).toEqual(new CogRPCError('Server did not acknowledge all cargo deliveries'));
-
-      expect(mockCargoDeliveryCall.end).toBeCalledTimes(1);
     });
   });
 

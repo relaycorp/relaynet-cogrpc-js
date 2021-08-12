@@ -83,15 +83,8 @@ export class CogRPCClient {
       deadline: makeDeadline(),
     });
 
-    // TODO: Not needed anymore
-    let hasCallEnded = false;
-    call.on('end', () => (hasCallEnded = true));
-
     async function* deliverCargo(): AsyncIterable<CargoDelivery> {
       for await (const relay of cargoRelay) {
-        if (hasCallEnded) {
-          break;
-        }
         const deliveryId = uuid();
         const delivery: CargoDelivery = { id: deliveryId, cargo: relay.cargo };
         yield delivery;
@@ -135,7 +128,7 @@ export class CogRPCClient {
     try {
       yield* await pipe(
         deliverCargo,
-        { sink: toIterable.sink(sink), source: toIterable.source(call) },
+        { sink: toIterable.sink(sink), source: call },
         collectAcknowledgments,
       );
     } catch (error) {
@@ -144,7 +137,6 @@ export class CogRPCClient {
         : new CogRPCError(error, 'Unexpected error while delivering cargo');
     } finally {
       sink.destroy();
-      call.end();
     }
   }
 
@@ -168,7 +160,7 @@ export class CogRPCClient {
     }
 
     try {
-      yield* await pipe(toIterable.source(call), processCargo);
+      yield* await pipe(call, processCargo);
     } catch (error) {
       call.end();
       throw new CogRPCError(error, 'Unexpected error while collecting cargo');

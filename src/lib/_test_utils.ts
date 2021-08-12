@@ -47,18 +47,13 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
   constructor() {
     super({ objectMode: true });
 
-    // Mimic what the gRPC client would do
-    this.on('error', () => this.end());
-
     jest.spyOn(this, 'emit' as any);
-    jest.spyOn(this, 'on' as any);
-    jest.spyOn(this, 'end' as any);
-    jest.spyOn(this, 'write' as any);
   }
 
   public _read(_size: number): void {
     if (this.readError) {
-      throw this.readError;
+      this.destroy(this.readError);
+      return;
     }
 
     while (this.output.length !== 0 && this.readPosition < this.output.length) {
@@ -108,6 +103,13 @@ export class MockCargoDeliveryCall extends MockGrpcBidiCall<
         const ack = { id: value.id };
         this.push(ack);
         this.acksSent++;
+      }
+
+      if (this.maxAcks === this.acksSent) {
+        // Destroy the stream after the last ACK has been processed
+        setImmediate(() => {
+          this.destroy();
+        });
       }
     });
   }
