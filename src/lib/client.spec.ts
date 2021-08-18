@@ -471,8 +471,6 @@ describe('CogRPCClient', () => {
       mockCargoCollectionCall.output.push({ id: 'the-id', cargo: Buffer.from('cargo') });
 
       await consumeAsyncIterable(client.collectCargo(CCA));
-
-      expect(mockCargoCollectionCall.emit).toBeCalledWith('end');
     });
 
     test('Stream errors should be thrown and cause the call to end', async () => {
@@ -485,7 +483,7 @@ describe('CogRPCClient', () => {
           'Unexpected error while collecting cargo',
         ),
       );
-      expect(mockCargoCollectionCall.emit).toBeCalledWith('end');
+      expect(mockCargoCollectionCall.destroyed).toBeTrue();
     });
   });
 });

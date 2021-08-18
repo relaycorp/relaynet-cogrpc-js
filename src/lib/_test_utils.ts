@@ -46,8 +46,6 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
 
   constructor() {
     super({ objectMode: true });
-
-    jest.spyOn(this, 'emit' as any);
   }
 
   public _read(_size: number): void {
@@ -76,8 +74,8 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
   }
 
   public end(cb?: () => void): void {
-    super.end(cb);
-    this.emit('end');
+    this.destroy();
+    cb?.();
   }
 }
 
