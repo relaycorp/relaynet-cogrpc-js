@@ -40,6 +40,8 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
 
   public readError?: Error;
 
+  public cancel = jest.fn();
+
   protected automaticallyEndReadStream = true;
 
   private readPosition = 0;
