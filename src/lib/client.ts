@@ -137,6 +137,9 @@ export class CogRPCClient {
         : new CogRPCError(error, 'Unexpected error while delivering cargo');
     } finally {
       sink.destroy();
+
+      // Work around https://github.com/grpc/grpc-node/issues/1238#issuecomment-901402063
+      call.cancel();
     }
   }
 
