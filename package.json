@@ -69,7 +69,7 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.5.5",
     "@grpc/proto-loader": "^0.6.9",
-    "@relaycorp/relaynet-core": "^1.58.1",
+    "@relaycorp/relaynet-core": "^1.59.0",
     "check-ip": "^1.1.1",
     "it-pipe": "^1.1.0",
     "stream-to-it": "^0.2.4",
