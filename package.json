@@ -58,7 +58,7 @@
     "jest-date-mock": "^1.0.8",
     "jest-extended": "^1.2.1",
     "npm-run-all": "^4.1.5",
-    "prettier": "^2.6.0",
+    "prettier": "^2.6.1",
     "trash-cli": "^5.0.0",
     "ts-jest": "^26.5.6",
     "ts-node": "^10.7.0",
@@ -69,7 +69,7 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.5.9",
     "@grpc/proto-loader": "^0.6.9",
-    "@relaycorp/relaynet-core": "^1.72.1",
+    "@relaycorp/relaynet-core": "^1.73.2",
     "check-ip": "^1.1.1",
     "it-pipe": "^1.1.0",
     "stream-to-it": "^0.2.4",
