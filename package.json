@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "@relaycorp/shared-config": "^1.6.1",
-    "@types/jest": "^27.4.1",
+    "@types/jest": "^27.5.0",
     "@types/pkijs": "0.0.13",
     "@types/verror": "^1.10.5",
     "buffer-to-arraybuffer": "0.0.6",
