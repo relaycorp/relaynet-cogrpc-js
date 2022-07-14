@@ -76,8 +76,8 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
   }
 
   public end(cb?: () => void): void {
-    this.destroy();
-    cb?.();
+    this.push(null); // Close readable stream
+    super.end(cb); // Close writable stream
   }
 }
 
