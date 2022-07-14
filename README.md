@@ -4,13 +4,11 @@ This library implements [CogRPC](https://specs.relaynet.network/RS-008) in JavaS
 
 ## Install
 
-`@relaycorp/cogrpc` requires Node.js v10 or newer, and the latest stable release can be installed as follows:
+`@relaycorp/cogrpc` can be installed as follows:
 
 ```shell
 npm install @relaycorp/cogrpc
 ```
-
-Development releases use the `dev` tag (`@relaycorp/cogrpc@dev`).
 
 ## Use
 
