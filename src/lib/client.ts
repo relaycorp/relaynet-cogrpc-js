@@ -134,7 +134,7 @@ export class CogRPCClient {
     } catch (error) {
       throw error instanceof CogRPCError
         ? error
-        : new CogRPCError(error, 'Unexpected error while delivering cargo');
+        : new CogRPCError(error as Error, 'Unexpected error while delivering cargo');
     } finally {
       sink.destroy();
 
@@ -166,7 +166,7 @@ export class CogRPCClient {
       yield* await pipe(call, processCargo);
     } catch (error) {
       call.end();
-      throw new CogRPCError(error, 'Unexpected error while collecting cargo');
+      throw new CogRPCError(error as Error, 'Unexpected error while collecting cargo');
     }
   }
 }

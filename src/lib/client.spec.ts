@@ -385,7 +385,7 @@ describe('CogRPCClient', () => {
           acks.push(ackId);
         }
       } catch (err) {
-        error = err;
+        error = err as any;
       }
 
       expect(acks).toEqual([acknowledgedDelivery.localId]);

@@ -50,7 +50,7 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
     super({ objectMode: true });
   }
 
-  public _read(_size: number): void {
+  public override _read(_size: number): void {
     if (this.readError) {
       this.destroy(this.readError);
       return;
@@ -70,12 +70,12 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
     }
   }
 
-  public _write(value: Input, _encoding: string, callback: (error?: Error) => void): void {
+  public override _write(value: Input, _encoding: string, callback: (error?: Error) => void): void {
     this.input.push(value);
     callback();
   }
 
-  public end(cb?: () => void): void {
+  public override end(cb?: () => void): void {
     this.push(null); // Close readable stream
     super.end(cb); // Close writable stream
   }
@@ -87,11 +87,11 @@ export class MockCargoDeliveryCall extends MockGrpcBidiCall<
 > {
   public maxAcks?: number;
 
-  protected automaticallyEndReadStream = false;
+  protected override automaticallyEndReadStream = false;
 
   protected acksSent = 0;
 
-  public _write(
+  public override _write(
     value: grpcService.CargoDelivery,
     encoding: string,
     callback: (error?: Error) => void,
