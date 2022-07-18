@@ -67,7 +67,7 @@
   },
   "dependencies": {
     "@grpc/grpc-js": "< 2",
-    "@grpc/proto-loader": "^0.6.12",
+    "@grpc/proto-loader": "^0.7.0",
     "@relaycorp/relaynet-core": ">= 1.81.4 < 2",
     "check-ip": "^1.1.1",
     "it-pipe": "^1.1.0",
