@@ -6,9 +6,12 @@ import { Duplex } from 'stream';
 
 import * as grpcService from './grpcService';
 
+export function getMockInstance(mockedObject: any): jest.MockInstance<any, any> {
+  return mockedObject as any;
+}
+
 export function getMockContext(mockedObject: any): jest.MockContext<any, any> {
-  const mockInstance = mockedObject as unknown as jest.MockInstance<any, any>;
-  return mockInstance.mock;
+  return getMockInstance(mockedObject).mock;
 }
 
 // tslint:disable-next-line:readonly-array

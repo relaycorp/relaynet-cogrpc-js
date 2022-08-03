@@ -6,7 +6,7 @@ import {
   CargoDeliveryRequest,
   PublicNodeAddress,
   RelaynetError,
-  resolvePublicAddress,
+  resolveInternetAddress,
 } from '@relaycorp/relaynet-core';
 import checkIp from 'check-ip';
 import pipe from 'it-pipe';
@@ -172,7 +172,7 @@ export class CogRPCClient {
 }
 
 async function resolveAddress(hostName: string): Promise<PublicNodeAddress> {
-  const srvAddress = await resolvePublicAddress(hostName, BindingType.CRC);
+  const srvAddress = await resolveInternetAddress(hostName, BindingType.CRC);
   return srvAddress ?? { host: hostName, port: DEFAULT_PORT };
 }
 

@@ -1,7 +1,7 @@
 // tslint:disable:no-object-mutation
 
 import * as grpc from '@grpc/grpc-js';
-import * as relaynet from '@relaycorp/relaynet-core';
+import { CargoDeliveryRequest, resolveInternetAddress } from '@relaycorp/relaynet-core';
 import { EventEmitter } from 'events';
 import * as jestDateMock from 'jest-date-mock';
 import * as tls from 'tls';
@@ -9,6 +9,7 @@ import * as tls from 'tls';
 import {
   generateCargoRelays,
   getMockContext,
+  getMockInstance,
   MockCargoDeliveryCall,
   MockGrpcBidiCall,
   mockSpy,
@@ -16,13 +17,29 @@ import {
 import { CogRPCClient, CogRPCError } from './client';
 import * as grpcService from './grpcService';
 
+const HOST = 'relaycorp.tech';
+const URL = `https://${HOST}`;
+const TARGET_HOST = 'cogrpc.relaycorp.tech';
+const TARGET_PORT = 1234;
+
 jest.mock('tls');
 jest.mock('@relaycorp/relaynet-core', () => {
   const realRelaynet = jest.requireActual('@relaycorp/relaynet-core');
-  return { ...realRelaynet, resolvePublicAddress: jest.fn() };
+  return {
+    ...realRelaynet,
+    resolveInternetAddress: jest.fn(),
+  };
 });
 
-//region Fixtures
+beforeEach(() => {
+  getMockInstance(resolveInternetAddress).mockResolvedValue({
+    host: TARGET_HOST,
+    port: TARGET_PORT,
+  });
+});
+afterEach(() => {
+  getMockInstance(resolveInternetAddress).mockReset();
+});
 
 let mockCargoDeliveryCall: MockCargoDeliveryCall;
 let mockCargoCollectionCall: MockGrpcBidiCall<
@@ -63,19 +80,6 @@ afterEach(() => {
   jestDateMock.clear();
 });
 
-const HOST = 'relaycorp.tech';
-const URL = `https://${HOST}`;
-const TARGET_HOST = 'cogrpc.relaycorp.tech';
-const TARGET_PORT = 1234;
-
-const mockResolvePublicAddress = mockSpy(
-  jest.spyOn(relaynet, 'resolvePublicAddress'),
-  async () => ({
-    host: TARGET_HOST,
-    port: TARGET_PORT,
-  }),
-);
-
 //endregion
 
 describe('CogRPCClient', () => {
@@ -91,7 +95,7 @@ describe('CogRPCClient', () => {
     });
 
     test('gRPC client should connect to host on port 443 if address is unresolved', async () => {
-      mockResolvePublicAddress.mockResolvedValue(null);
+      getMockInstance(resolveInternetAddress).mockResolvedValue(null);
 
       await CogRPCClient.init(`https://${HOST}`);
 
@@ -131,7 +135,10 @@ describe('CogRPCClient', () => {
 
       describe('Private IP address as target host', () => {
         test('Any TLS certificate should be accepted', async () => {
-          mockResolvePublicAddress.mockResolvedValue({ host: PRIVATE_IP, port: PORT });
+          getMockInstance(resolveInternetAddress).mockResolvedValue({
+            host: PRIVATE_IP,
+            port: PORT,
+          });
 
           await CogRPCClient.init(`https://${PRIVATE_IP}:${PORT}`);
 
@@ -149,7 +156,10 @@ describe('CogRPCClient', () => {
         });
 
         test('TLS socket should be closed immediately after use', async () => {
-          mockResolvePublicAddress.mockResolvedValue({ host: PRIVATE_IP, port: PORT });
+          getMockInstance(resolveInternetAddress).mockResolvedValue({
+            host: PRIVATE_IP,
+            port: PORT,
+          });
 
           await CogRPCClient.init(`https://${PRIVATE_IP}`);
 
@@ -157,7 +167,10 @@ describe('CogRPCClient', () => {
         });
 
         test('TLS socket should timeout after 2 seconds', async () => {
-          mockResolvePublicAddress.mockResolvedValue({ host: PRIVATE_IP, port: PORT });
+          getMockInstance(resolveInternetAddress).mockResolvedValue({
+            host: PRIVATE_IP,
+            port: PORT,
+          });
 
           await CogRPCClient.init(`https://${PRIVATE_IP}`);
 
@@ -172,13 +185,16 @@ describe('CogRPCClient', () => {
           setImmediate(() => {
             mockTLSSocket.emit('error', error);
           });
-          mockResolvePublicAddress.mockResolvedValue({ host: PRIVATE_IP, port: PORT });
+          getMockInstance(resolveInternetAddress).mockResolvedValue({
+            host: PRIVATE_IP,
+            port: PORT,
+          });
 
           await expect(CogRPCClient.init(`https://${PRIVATE_IP}`)).rejects.toEqual(error);
         });
 
         test('Port 443 should be used if public address is not resolved', async () => {
-          mockResolvePublicAddress.mockResolvedValue(null);
+          getMockInstance(resolveInternetAddress).mockResolvedValue(null);
 
           await CogRPCClient.init(`https://${PRIVATE_IP}`);
 
@@ -189,7 +205,10 @@ describe('CogRPCClient', () => {
         });
 
         test('Any certificate should be accepted if SRV resolves to private IP', async () => {
-          mockResolvePublicAddress.mockResolvedValue({ host: PRIVATE_IP, port: TARGET_PORT });
+          getMockInstance(resolveInternetAddress).mockResolvedValue({
+            host: PRIVATE_IP,
+            port: TARGET_PORT,
+          });
 
           await CogRPCClient.init(`https://${HOST}`);
 
@@ -272,7 +291,7 @@ describe('CogRPCClient', () => {
     test('Each cargo from input iterator should be delivered', async () => {
       const client = await CogRPCClient.init(URL);
 
-      const cargoRelays: readonly relaynet.CargoDeliveryRequest[] = [
+      const cargoRelays: readonly CargoDeliveryRequest[] = [
         { localId: 'one', cargo: Buffer.from('foo') },
         { localId: 'two', cargo: Buffer.from('bar') },
       ];
@@ -345,7 +364,7 @@ describe('CogRPCClient', () => {
       const client = await CogRPCClient.init(URL);
       const localId = 'original-id';
 
-      async function* generateRelays(): AsyncIterable<relaynet.CargoDeliveryRequest> {
+      async function* generateRelays(): AsyncIterable<CargoDeliveryRequest> {
         yield { localId, cargo: Buffer.from('foo') };
 
         await new Promise(setImmediate);
