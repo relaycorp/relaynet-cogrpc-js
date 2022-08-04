@@ -33,6 +33,12 @@ export class CogRPCError extends RelaynetError {}
  * CogRPC client.
  */
 export class CogRPCClient {
+  /**
+   * Initialize a CogRPC client to connect to a server on the Internet.
+   *
+   * @param address The Awala Internet address of the server
+   * @throws {CogRPCError} if the `address` doesn't exist
+   */
   public static async initInternet(address: string): Promise<CogRPCClient> {
     const srvAddress = await resolveInternetAddress(address, BindingType.CRC);
     if (!srvAddress) {
@@ -44,14 +50,12 @@ export class CogRPCClient {
   }
 
   /**
-   * Initialize a CogRPC client.
-   *
-   * If the host name in `serverUrl` is a private IPv4/IPv6 address, self-issued certificates will
-   * be accepted. Under no other circumstances will self-issued certificates be accepted.
-   *
-   * TLS is always required.
+   * Initialize a CogRPC client to connect to a server on the Local Area Network.
    *
    * @param host Host name (and potentially port) of the gRPC server
+   * @throws {CogRPCClient} if `host` is a public IP address or domain name
+   *
+   * The server may use self-issued TLS certificates.
    */
   public static async initLan(host: string): Promise<CogRPCClient> {
     const { hostname, port } = new URL(`scheme://${host}`);
