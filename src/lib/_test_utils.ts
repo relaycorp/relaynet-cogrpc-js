@@ -43,8 +43,6 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
 
   protected automaticallyEndReadStream = true;
 
-  private readPosition = 0;
-
   constructor() {
     super({ objectMode: true });
   }
@@ -55,10 +53,8 @@ export class MockGrpcBidiCall<Input, Output> extends Duplex {
       return;
     }
 
-    while (this.output.length !== 0 && this.readPosition < this.output.length) {
-      const canPushAgain = this.push(this.output[this.readPosition]);
-      // tslint:disable:no-object-mutation
-      this.readPosition += 1;
+    while (this.output.length) {
+      const canPushAgain = this.push(this.output.shift());
       if (!canPushAgain) {
         return;
       }
@@ -105,10 +101,7 @@ export class MockCargoDeliveryCall extends MockGrpcBidiCall<
       }
 
       if (this.maxAcks === this.acksSent) {
-        // Destroy the stream after the last ACK has been processed
-        setImmediate(() => {
-          this.destroy();
-        });
+        setImmediate(() => this.end());
       }
     });
   }
