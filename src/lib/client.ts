@@ -4,7 +4,6 @@ import * as grpc from '@grpc/grpc-js';
 import {
   BindingType,
   CargoDeliveryRequest,
-  PublicNodeAddress,
   RelaynetError,
   resolveInternetAddress,
 } from '@relaycorp/relaynet-core';
@@ -34,6 +33,16 @@ export class CogRPCError extends RelaynetError {}
  * CogRPC client.
  */
 export class CogRPCClient {
+  public static async initInternet(address: string): Promise<CogRPCClient> {
+    const srvAddress = await resolveInternetAddress(address, BindingType.CRC);
+    if (!srvAddress) {
+      throw new CogRPCError(`Internet address "${address}" doesn't exist`);
+    }
+
+    const credentials = grpc.credentials.createSsl();
+    return new CogRPCClient(`${srvAddress.host}:${srvAddress.port}`, credentials);
+  }
+
   /**
    * Initialize a CogRPC client.
    *
@@ -42,16 +51,13 @@ export class CogRPCClient {
    *
    * TLS is always required.
    *
-   * @param serverUrl URL to the gRPC server
+   * @param host Host name (and potentially port) of the gRPC server
    */
-  public static async init(serverUrl: string): Promise<CogRPCClient> {
-    const serverUrlParts = new URL(serverUrl);
-    if (serverUrlParts.protocol !== 'https:') {
-      throw new CogRPCError(`Cannot connect to ${serverUrlParts.hostname} without TLS`);
-    }
-    const address = await resolveAddress(serverUrlParts.host);
-    const credentials = await createTlsCredentials(address.host, address.port);
-    return new CogRPCClient(`${address.host}:${address.port}`, credentials);
+  public static async initLan(host: string): Promise<CogRPCClient> {
+    const { hostname, port } = new URL(`scheme://${host}`);
+    const portSanitized = port === '' ? DEFAULT_PORT : parseInt(port, 10);
+    const credentials = await createTlsCredentials(hostname, portSanitized);
+    return new CogRPCClient(`${hostname}:${portSanitized}`, credentials);
   }
 
   protected readonly grpcClient: InstanceType<typeof CargoRelayClient>;
@@ -171,17 +177,11 @@ export class CogRPCClient {
   }
 }
 
-async function resolveAddress(hostName: string): Promise<PublicNodeAddress> {
-  const srvAddress = await resolveInternetAddress(hostName, BindingType.CRC);
-  return srvAddress ?? { host: hostName, port: DEFAULT_PORT };
-}
-
 async function createTlsCredentials(host: string, port: number): Promise<grpc.ChannelCredentials> {
   const ipInfo = checkIp(host);
   if (!ipInfo.isValid || ipInfo.isPublicIp) {
-    // The host name is a domain name or a public IP address, so we should let the usual certificate
-    // validation take place.
-    return grpc.credentials.createSsl();
+    // The host name is a domain name or a public IP address
+    throw new CogRPCError(`Server is outside the current LAN (${host})`);
   }
 
   // The host is a private IP address so it's going to have a self-issued certificate. Due to a

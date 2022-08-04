@@ -10,10 +10,6 @@ export function getMockInstance(mockedObject: any): jest.MockInstance<any, any> 
   return mockedObject as any;
 }
 
-export function getMockContext(mockedObject: any): jest.MockContext<any, any> {
-  return getMockInstance(mockedObject).mock;
-}
-
 // tslint:disable-next-line:readonly-array
 export function mockSpy<T, Y extends any[]>(
   spy: jest.MockInstance<T, Y>,

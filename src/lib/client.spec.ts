@@ -1,14 +1,17 @@
 // tslint:disable:no-object-mutation
 
 import * as grpc from '@grpc/grpc-js';
-import { CargoDeliveryRequest, resolveInternetAddress } from '@relaycorp/relaynet-core';
+import {
+  BindingType,
+  CargoDeliveryRequest,
+  resolveInternetAddress,
+} from '@relaycorp/relaynet-core';
 import { EventEmitter } from 'events';
 import * as jestDateMock from 'jest-date-mock';
 import * as tls from 'tls';
 
 import {
   generateCargoRelays,
-  getMockContext,
   getMockInstance,
   MockCargoDeliveryCall,
   MockGrpcBidiCall,
@@ -17,10 +20,13 @@ import {
 import { CogRPCClient, CogRPCError } from './client';
 import * as grpcService from './grpcService';
 
-const HOST = 'relaycorp.tech';
-const URL = `https://${HOST}`;
-const TARGET_HOST = 'cogrpc.relaycorp.tech';
-const TARGET_PORT = 1234;
+const INTERNET_ADDRESS = 'braavos.relaycorp.cloud';
+const PRIVATE_IP_ADDRESS = '192.168.0.1';
+const PUBLIC_IP_ADDRESS = '104.27.161.26';
+const TARGET_HOST = 'braavos-cogrpc.relaycorp.cloud';
+const PORT = 1234;
+
+const OCTETS_IN_9_MIB = 9_437_184;
 
 jest.mock('tls');
 jest.mock('@relaycorp/relaynet-core', () => {
@@ -29,16 +35,6 @@ jest.mock('@relaycorp/relaynet-core', () => {
     ...realRelaynet,
     resolveInternetAddress: jest.fn(),
   };
-});
-
-beforeEach(() => {
-  getMockInstance(resolveInternetAddress).mockResolvedValue({
-    host: TARGET_HOST,
-    port: TARGET_PORT,
-  });
-});
-afterEach(() => {
-  getMockInstance(resolveInternetAddress).mockReset();
 });
 
 let mockCargoDeliveryCall: MockCargoDeliveryCall;
@@ -83,172 +79,177 @@ afterEach(() => {
 //endregion
 
 describe('CogRPCClient', () => {
-  describe('init', () => {
-    const createSslSpy = mockSpy(jest.spyOn(grpc.credentials, 'createSsl'));
+  const createSslSpy = mockSpy(jest.spyOn(grpc.credentials, 'createSsl'));
 
-    test('gRPC client should connect to public address if resolved', async () => {
-      await CogRPCClient.init(`https://${HOST}`);
-
-      expect(grpcService.CargoRelayClient).toBeCalledTimes(1);
-      const clientInitializationArgs = getMockContext(grpcService.CargoRelayClient).calls[0];
-      expect(clientInitializationArgs[0]).toEqual(`${TARGET_HOST}:${TARGET_PORT}`);
+  describe('initInternet', () => {
+    beforeEach(() => {
+      getMockInstance(resolveInternetAddress).mockResolvedValue({
+        host: TARGET_HOST,
+        port: PORT,
+      });
+    });
+    afterEach(() => {
+      getMockInstance(resolveInternetAddress).mockReset();
     });
 
-    test('gRPC client should connect to host on port 443 if address is unresolved', async () => {
-      getMockInstance(resolveInternetAddress).mockResolvedValue(null);
+    test('gRPC client should connect to Internet address resolved', async () => {
+      await CogRPCClient.initInternet(INTERNET_ADDRESS);
 
-      await CogRPCClient.init(`https://${HOST}`);
-
-      expect(grpcService.CargoRelayClient).toBeCalledTimes(1);
-      const clientInitializationArgs = getMockContext(grpcService.CargoRelayClient).calls[0];
-      expect(clientInitializationArgs[0]).toEqual(`${HOST}:443`);
-    });
-
-    test('TLS should be used', async () => {
-      await CogRPCClient.init(URL);
-
-      expect(createSslSpy).toBeCalledTimes(1);
-      const credentials = createSslSpy.mock.results[0].value;
-      const clientInitializationArgs = getMockContext(grpcService.CargoRelayClient).calls[0];
-      expect(clientInitializationArgs[1]).toBe(credentials);
-    });
-
-    test('Non-TLS connections must be refused', async () => {
-      await expect(CogRPCClient.init(`http://${HOST}`)).rejects.toEqual(
-        new CogRPCError(`Cannot connect to ${HOST} without TLS`),
+      expect(resolveInternetAddress).toBeCalledWith(INTERNET_ADDRESS, BindingType.CRC);
+      expect(grpcService.CargoRelayClient).toBeCalledWith(
+        `${TARGET_HOST}:${PORT}`,
+        expect.anything(),
+        expect.anything(),
       );
     });
 
-    describe('TLS server certificate validation', () => {
-      const PRIVATE_IP = '192.168.0.1';
-      const PORT = 1234;
+    test('Non-existing address should be refused', async () => {
+      getMockInstance(resolveInternetAddress).mockResolvedValue(null);
 
-      const DUMMY_CERTIFICATE_DER = Buffer.from('Pretend this is a DER-encoded X.509 cert');
-      let mockTLSSocket: MockTLSSocket;
-      beforeEach(() => {
-        mockTLSSocket = new MockTLSSocket(DUMMY_CERTIFICATE_DER);
-        (tls.connect as any as jest.MockInstance<any, any>).mockImplementation((_, cb) => {
-          setImmediate(cb);
-          return mockTLSSocket;
-        });
-      });
+      await expect(CogRPCClient.initInternet(INTERNET_ADDRESS)).rejects.toThrowWithMessage(
+        CogRPCError,
+        `Internet address "${INTERNET_ADDRESS}" doesn't exist`,
+      );
+    });
 
-      describe('Private IP address as target host', () => {
-        test('Any TLS certificate should be accepted', async () => {
-          getMockInstance(resolveInternetAddress).mockResolvedValue({
-            host: PRIVATE_IP,
-            port: PORT,
-          });
+    test('TLS should be used', async () => {
+      await CogRPCClient.initInternet(INTERNET_ADDRESS);
 
-          await CogRPCClient.init(`https://${PRIVATE_IP}:${PORT}`);
-
-          expect(tls.connect).toBeCalledWith(
-            expect.objectContaining({ host: PRIVATE_IP, port: PORT, rejectUnauthorized: false }),
-            expect.anything(),
-          );
-
-          expect(createSslSpy).toBeCalledTimes(1);
-          const retrievedCertificatePem = createSslSpy.mock.calls[0][0];
-          expect(retrievedCertificatePem).toBeInstanceOf(Buffer);
-          expect(pemCertificateToDer(retrievedCertificatePem as Buffer)).toEqual(
-            DUMMY_CERTIFICATE_DER,
-          );
-        });
-
-        test('TLS socket should be closed immediately after use', async () => {
-          getMockInstance(resolveInternetAddress).mockResolvedValue({
-            host: PRIVATE_IP,
-            port: PORT,
-          });
-
-          await CogRPCClient.init(`https://${PRIVATE_IP}`);
-
-          expect(mockTLSSocket.end).toBeCalled();
-        });
-
-        test('TLS socket should timeout after 2 seconds', async () => {
-          getMockInstance(resolveInternetAddress).mockResolvedValue({
-            host: PRIVATE_IP,
-            port: PORT,
-          });
-
-          await CogRPCClient.init(`https://${PRIVATE_IP}`);
-
-          expect(mockTLSSocket.setTimeout).toBeCalledWith(2_000);
-        });
-
-        test('TLS connection errors should be thrown', async () => {
-          const error = new Error('Failed to connected');
-          (tls.connect as any as jest.MockInstance<any, any>).mockImplementation(() => {
-            return mockTLSSocket;
-          });
-          setImmediate(() => {
-            mockTLSSocket.emit('error', error);
-          });
-          getMockInstance(resolveInternetAddress).mockResolvedValue({
-            host: PRIVATE_IP,
-            port: PORT,
-          });
-
-          await expect(CogRPCClient.init(`https://${PRIVATE_IP}`)).rejects.toEqual(error);
-        });
-
-        test('Port 443 should be used if public address is not resolved', async () => {
-          getMockInstance(resolveInternetAddress).mockResolvedValue(null);
-
-          await CogRPCClient.init(`https://${PRIVATE_IP}`);
-
-          expect(tls.connect).toBeCalledWith(
-            expect.objectContaining({ port: 443 }),
-            expect.anything(),
-          );
-        });
-
-        test('Any certificate should be accepted if SRV resolves to private IP', async () => {
-          getMockInstance(resolveInternetAddress).mockResolvedValue({
-            host: PRIVATE_IP,
-            port: TARGET_PORT,
-          });
-
-          await CogRPCClient.init(`https://${HOST}`);
-
-          expect(tls.connect).toBeCalledWith(
-            expect.objectContaining({ host: PRIVATE_IP, port: TARGET_PORT }),
-            expect.anything(),
-          );
-        });
-      });
-
-      test('TLS certificate validity should be enforced if host is a public IP address', async () => {
-        await CogRPCClient.init('https://104.27.161.26');
-
-        expect(tls.connect).not.toBeCalled();
-        expect(createSslSpy).toBeCalledWith();
-      });
-
-      test('TLS certificate validity should be enforced if SRV resolves to domain', async () => {
-        await CogRPCClient.init('https://example.com');
-
-        expect(tls.connect).not.toBeCalled();
-        expect(createSslSpy).toBeCalledWith();
-      });
+      expect(createSslSpy).toBeCalledWith();
+      const credentials = createSslSpy.mock.results[0].value;
+      expect(grpcService.CargoRelayClient).toBeCalledWith(
+        expect.anything(),
+        credentials,
+        expect.anything(),
+      );
     });
 
     test('Incoming messages of up to 9 MiB should be supported', async () => {
-      await CogRPCClient.init(URL);
+      await CogRPCClient.initInternet(INTERNET_ADDRESS);
 
       expect(grpcService.CargoRelayClient).toBeCalledWith(
         expect.anything(),
         expect.anything(),
-        expect.objectContaining({
-          'grpc.max_receive_message_length': 9_437_184,
-        }),
+        expect.objectContaining({ 'grpc.max_receive_message_length': OCTETS_IN_9_MIB }),
       );
     });
   });
 
+  describe('initLan', () => {
+    const DUMMY_CERTIFICATE_DER = Buffer.from('Pretend this is a DER-encoded X.509 cert');
+    let mockTLSSocket: MockTLSSocket;
+    beforeEach(() => {
+      mockTLSSocket = new MockTLSSocket(DUMMY_CERTIFICATE_DER);
+      (tls.connect as any as jest.MockInstance<any, any>).mockImplementation((_, cb) => {
+        setImmediate(cb);
+        return mockTLSSocket;
+      });
+    });
+
+    test('Private IP address with port should be accepted', async () => {
+      const host = `${PRIVATE_IP_ADDRESS}:${PORT}`;
+
+      await CogRPCClient.initLan(host);
+
+      expect(grpcService.CargoRelayClient).toBeCalledWith(
+        host,
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    test('Port 443 should be used by default', async () => {
+      await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
+
+      expect(grpcService.CargoRelayClient).toBeCalledWith(
+        `${PRIVATE_IP_ADDRESS}:443`,
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    test('Public IP address should be refused', async () => {
+      await expect(CogRPCClient.initLan(PUBLIC_IP_ADDRESS)).rejects.toThrowWithMessage(
+        CogRPCError,
+        `Server is outside the current LAN (${PUBLIC_IP_ADDRESS})`,
+      );
+    });
+
+    test('Domain name should be refused', async () => {
+      await expect(CogRPCClient.initLan(INTERNET_ADDRESS)).rejects.toThrowWithMessage(
+        CogRPCError,
+        `Server is outside the current LAN (${INTERNET_ADDRESS})`,
+      );
+    });
+
+    test('Incoming messages of up to 9 MiB should be supported', async () => {
+      await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
+
+      expect(grpcService.CargoRelayClient).toBeCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({ 'grpc.max_receive_message_length': OCTETS_IN_9_MIB }),
+      );
+    });
+
+    describe('TLS server certificate validation', () => {
+      test('Any TLS certificate should be accepted', async () => {
+        await CogRPCClient.initLan(`${PRIVATE_IP_ADDRESS}:${PORT}`);
+
+        expect(tls.connect).toBeCalledWith(
+          expect.objectContaining({
+            host: PRIVATE_IP_ADDRESS,
+            port: PORT,
+            rejectUnauthorized: false,
+          }),
+          expect.anything(),
+        );
+
+        expect(createSslSpy).toBeCalledTimes(1);
+        const retrievedCertificatePem = createSslSpy.mock.calls[0][0];
+        expect(retrievedCertificatePem).toBeInstanceOf(Buffer);
+        expect(pemCertificateToDer(retrievedCertificatePem as Buffer)).toEqual(
+          DUMMY_CERTIFICATE_DER,
+        );
+      });
+
+      test('TLS socket should be closed immediately after use', async () => {
+        await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
+
+        expect(mockTLSSocket.end).toBeCalled();
+      });
+
+      test('TLS socket should timeout after 2 seconds', async () => {
+        await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
+
+        expect(mockTLSSocket.setTimeout).toBeCalledWith(2_000);
+      });
+
+      test('TLS connection errors should be thrown', async () => {
+        const error = new Error('Failed to connected');
+        (tls.connect as any as jest.MockInstance<any, any>).mockImplementation(() => {
+          return mockTLSSocket;
+        });
+        setImmediate(() => {
+          mockTLSSocket.emit('error', error);
+        });
+
+        await expect(CogRPCClient.initLan(PRIVATE_IP_ADDRESS)).rejects.toEqual(error);
+      });
+
+      test('Port 443 should be used by default', async () => {
+        await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
+
+        expect(tls.connect).toBeCalledWith(
+          expect.objectContaining({ port: 443 }),
+          expect.anything(),
+        );
+      });
+    });
+  });
+
   test('close() should close the client', async () => {
-    const client = await CogRPCClient.init(URL);
+    const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
     client.close();
 
@@ -258,7 +259,7 @@ describe('CogRPCClient', () => {
 
   describe('deliverCargo', () => {
     test('Call metadata should not be set', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([])));
 
@@ -267,7 +268,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Deadline should be set to 3 seconds', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
       const currentDate = new Date();
       jestDateMock.advanceTo(currentDate);
@@ -281,7 +282,7 @@ describe('CogRPCClient', () => {
     });
 
     test('No cargo should be delivered if input iterator is empty', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([])));
 
@@ -289,7 +290,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Each cargo from input iterator should be delivered', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
       const cargoRelays: readonly CargoDeliveryRequest[] = [
         { localId: 'one', cargo: Buffer.from('foo') },
@@ -305,7 +306,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Relay ids from input iterator should be replaced before sending to server', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay])));
@@ -316,7 +317,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Id of each relay acknowledged by the server should be yielded', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       const deliveredCargoIds = client.deliverCargo(generateCargoRelays([stubRelay]));
@@ -325,7 +326,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Unknown relay ids should end the call and throw an error', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
       const invalidAckId = 'unrecognized-id';
       mockCargoDeliveryCall.output.push({ id: invalidAckId });
 
@@ -340,7 +341,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Connection should be ended when all relays have been acknowledged', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
       const stubRelay = { localId: 'original-id', cargo: Buffer.from('foo') };
       await consumeAsyncIterable(client.deliverCargo(generateCargoRelays([stubRelay])));
@@ -350,7 +351,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Stream errors should be thrown', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
       mockCargoDeliveryCall.readError = new Error('Random error found');
 
       await expect(
@@ -361,7 +362,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Call should be ended when the server ends it while delivering cargo', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
       const localId = 'original-id';
 
       async function* generateRelays(): AsyncIterable<CargoDeliveryRequest> {
@@ -386,7 +387,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Error should be thrown when connection ends with outstanding acknowledgments', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
       mockCargoDeliveryCall.maxAcks = 1;
 
       const acknowledgedDelivery = { localId: 'acknowledged', cargo: Buffer.from('foo') };
@@ -417,7 +418,7 @@ describe('CogRPCClient', () => {
     const CCA = Buffer.from('The RAMF-serialized CCA');
 
     test('CCA should be passed in call metadata Authorization', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
       await consumeAsyncIterable(client.collectCargo(CCA));
 
@@ -427,7 +428,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Deadline should be set to 3 seconds', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
       const currentDate = new Date();
       jestDateMock.advanceTo(currentDate);
@@ -442,13 +443,13 @@ describe('CogRPCClient', () => {
     });
 
     test('No cargo should be yielded if none was received', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
       await expect(consumeAsyncIterable(client.collectCargo(CCA))).resolves.toHaveLength(0);
     });
 
     test('Each cargo received should be yielded serialized', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
       const cargoSerialized = Buffer.from('cargo');
       mockCargoCollectionCall.output.push({ id: 'the-id', cargo: cargoSerialized });
 
@@ -458,7 +459,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Each cargo received should be acknowledged', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
       const deliveryId = 'the-id';
       mockCargoCollectionCall.output.push({ id: deliveryId, cargo: Buffer.from('cargo') });
 
@@ -468,7 +469,7 @@ describe('CogRPCClient', () => {
     });
 
     test('Unprocessed cargo should not be acknowledged', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
       const processedCargoId = 'processed-cargo';
       mockCargoCollectionCall.output.push({ id: processedCargoId, cargo: Buffer.from('cargo1') });
       mockCargoCollectionCall.output.push({ id: 'id2', cargo: Buffer.from('cargo2') });
@@ -487,14 +488,14 @@ describe('CogRPCClient', () => {
     });
 
     test('Call should be ended upon completion', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
       mockCargoCollectionCall.output.push({ id: 'the-id', cargo: Buffer.from('cargo') });
 
       await consumeAsyncIterable(client.collectCargo(CCA));
     });
 
     test('Stream errors should be thrown and cause the call to end', async () => {
-      const client = await CogRPCClient.init(URL);
+      const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
       mockCargoCollectionCall.readError = new Error('Whoopsie');
 
       await expect(consumeAsyncIterable(client.collectCargo(CCA))).rejects.toEqual(
