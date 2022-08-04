@@ -97,6 +97,7 @@ export class MockCargoDeliveryCall extends MockGrpcBidiCall<
       if (this.maxAcks === undefined || this.acksSent < this.maxAcks) {
         const ack = { id: value.id };
         this.push(ack);
+        // tslint:disable-next-line:no-object-mutation
         this.acksSent++;
       }
 
