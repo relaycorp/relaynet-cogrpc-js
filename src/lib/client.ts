@@ -55,7 +55,7 @@ export class CogRPCClient {
    * @param host Host name (and potentially port) of the gRPC server
    * @throws {CogRPCClient} if `host` is a public IP address or domain name
    *
-   * The server may use self-issued TLS certificates.
+   * The server may use a self-issued TLS certificate.
    */
   public static async initLan(host: string): Promise<CogRPCClient> {
     const { hostname, port } = new URL(`scheme://${host}`);
