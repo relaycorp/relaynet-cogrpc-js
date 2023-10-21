@@ -41,7 +41,7 @@ export const CargoRelayClient: typeof Client = service.CargoRelay as typeof Clie
 
 //region Server interface
 
-type CargoRelayServerMethod<Req, Res> = (call: ServerDuplexStream<Req, Res>) => void;
+type CargoRelayServerMethod<Req, Res> = (call: ServerDuplexStream<Req, Res>) => Promise<void>;
 export interface CargoRelayServerMethodSet {
   readonly collectCargo: CargoRelayServerMethod<CargoDeliveryAck, CargoDelivery>;
   readonly deliverCargo: CargoRelayServerMethod<CargoDelivery, CargoDeliveryAck>;
