@@ -248,6 +248,39 @@ describe('CogRPCClient', () => {
     });
   });
 
+  describe('initLocalhost', () => {
+    test('Should connect to localhost on specified port', async () => {
+      await CogRPCClient.initLocalhost(PORT);
+
+      expect(grpcService.CargoRelayClient).toBeCalledWith(
+        `127.0.0.1:${PORT}`,
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    test('Should not use TLS', async () => {
+      await CogRPCClient.initLocalhost(PORT);
+
+      expect(createSslSpy).not.toBeCalled();
+      expect(grpcService.CargoRelayClient).toBeCalledWith(
+        expect.anything(),
+        expect.toSatisfy<grpc.ChannelCredentials>((c) => !c._isSecure()),
+        expect.anything(),
+      );
+    });
+
+    test('Incoming messages of up to 9 MiB should be supported', async () => {
+      await CogRPCClient.initLocalhost(PORT);
+
+      expect(grpcService.CargoRelayClient).toBeCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({ 'grpc.max_receive_message_length': OCTETS_IN_9_MIB }),
+      );
+    });
+  });
+
   test('close() should close the client', async () => {
     const client = await CogRPCClient.initLan(PRIVATE_IP_ADDRESS);
 
