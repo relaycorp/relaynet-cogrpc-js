@@ -64,6 +64,16 @@ export class CogRPCClient {
     return new CogRPCClient(`${hostname}:${portSanitized}`, credentials);
   }
 
+  /**
+   * Initialize a CogRPC client to connect to a server on localhost without TLS.
+   *
+   * @param port Port of the gRPC server
+   */
+  public static async initLocalhost(port: number): Promise<CogRPCClient> {
+    const credentials = grpc.credentials.createInsecure();
+    return new CogRPCClient(`127.0.0.1:${port}`, credentials);
+  }
+
   protected readonly grpcClient: InstanceType<typeof CargoRelayClient>;
 
   protected constructor(host: string, credentials: grpc.ChannelCredentials) {
