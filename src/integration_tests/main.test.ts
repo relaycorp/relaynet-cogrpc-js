@@ -2,7 +2,7 @@ import { generateCargoRelays } from '../lib/_test_utils';
 import { CogRPCClient } from '../lib/client';
 
 test('Cargo delivery with a real gateway should succeed', async () => {
-  const client = await CogRPCClient.initInternet('frankfurt.relaycorp.cloud');
+  const client = await CogRPCClient.initInternet('belgium.relaycorp.services');
   const localId = 'id';
   const deliveries = generateCargoRelays([{ localId, cargo: Buffer.from([]) }]);
 
